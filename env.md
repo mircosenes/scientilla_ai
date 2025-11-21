@@ -1,4 +1,4 @@
-## Python 3.11 Environment Setup for HuggingFace Adapters
+## Python 3.11 Environment Setup
 
 Some versions of the HuggingFace Adapters library are not compatible with Python 3.12.
 This results in installation failures or runtime errors when loading adapter-based models (e.g., AutoAdapterModel, SPECTER2).
