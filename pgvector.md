@@ -13,6 +13,29 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 This command registers the custom vector type and related operators such as cosine distance <=>.
 
+#### 1.1 Installing pgvector Inside a Docker PostgreSQL Container
+If PostgreSQL is running in a Docker container that does not include pgvector (for example when using the official image postgres:16), the extension must be installed manually inside the container before running CREATE EXTENSION vector;.
+###### Install pgvector inside the container
+
+1. Enter the container shell:
+    ```
+    docker exec -it postgres-db bash
+    ```
+2. Update package lists:
+    ```
+    apt update
+    ```
+3. Install pgvector for PostgreSQL 16:
+    ```
+    apt install -y postgresql-16-pgvector
+    ```
+    This installs the vector type and SQL definitions into PostgreSQL’s extension directory.
+
+4. Exit the container:
+    ```
+    exit
+    ```
+
 ### 2. Add the embedding column
 
 Each document will store its embedding as a 768-dimensional vector.
