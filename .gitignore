@@ -1,2 +1,11 @@
-/myEnv
-/myEnv311
+# Virtual environments
+myEnv/
+myEnv311/
+
+# Embeddings data
+embeddings/
+
+# Data files
+doc_ids.json
+specter2_papers.json
+specter2_embeddings.npy
