@@ -9,3 +9,8 @@ embeddings/
 doc_ids.json
 specter2_papers.json
 specter2_embeddings.npy
+
+# Generated embedding files
+utils/projector/vectors.tsv
+utils/projector/metadata.tsv
+
