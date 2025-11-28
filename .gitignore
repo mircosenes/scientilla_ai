@@ -14,3 +14,5 @@ specter2_embeddings.npy
 utils/projector/vectors.tsv
 utils/projector/metadata.tsv
 
+utils/projector_specter2/vectors.tsv
+utils/projector_specter2/metadata.tsv

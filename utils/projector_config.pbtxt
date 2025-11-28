@@ -1,0 +1,11 @@
+embeddings {
+  tensor_name: "specter1"
+  tensor_path: "projector/vectors.tsv"
+  metadata_path: "projector/metadata.tsv"
+}
+
+embeddings {
+  tensor_name: "specter2"
+  tensor_path: "projector_specter2/vectors.tsv"
+  metadata_path: "projector_specter2/metadata.tsv"
+}

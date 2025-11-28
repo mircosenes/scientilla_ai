@@ -1,5 +1,5 @@
 embeddings {
-  tensor_name: "specter"
+  tensor_name: "specter2"
   tensor_path: "vectors.tsv"
   metadata_path: "metadata.tsv"
 }
