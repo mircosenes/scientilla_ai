@@ -16,3 +16,9 @@ utils/projector/metadata.tsv
 
 utils/projector_specter2/vectors.tsv
 utils/projector_specter2/metadata.tsv
+
+# Node modules and lock files
+semantic-search-app/backend/node_modules/
+semantic-search-app/backend/package-lock.json
+semantic-search-app/backend/.env
+
