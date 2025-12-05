@@ -1,23 +1,40 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
   <meta charset="UTF-8" />
   <title>Semantic Search</title>
   <link rel="stylesheet" href="assets/styles.css" />
 </head>
+
 <body>
   <main>
+
     <h1>Explore Scientilla Research Output with Semantic Search</h1>
 
-    <form id="search-form">
-      <label for="query">Query</label>
-      <input type="text" id="query" name="query" required placeholder="Try queries like 'machine learning in healthcare', 'quantum computing applications'..."/>
-      <button type="submit">Cerca</button>
-    </form>
+    <p class="description">
+      <strong>Search</strong> through Scientilla's research database using natural language queries and <strong>click</strong> on results to find similar items.
+    </p>
 
-    <section id="results"></section>
+    <div class="main-box">
+      <div class="search-box">
+        <form id="search-form">
+          <label for="query">Query</label>
+          <input type="text" id="query" name="query" required
+            placeholder="Try queries like 'machine learning in healthcare', 'quantum computing applications'..." />
+          <button type="submit">Search</button>
+        </form>
+        <section id="results"></section>
+      </div>
+      <div class="similarity-box">
+        <section id="similar-items"></section>
+      </div>
+    </div>
+
+
   </main>
 
   <script src="js/app.js"></script>
 </body>
+
 </html>

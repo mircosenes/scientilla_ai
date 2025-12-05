@@ -109,6 +109,48 @@ app.post("/api/search", async (req, res) => {
   }
 });
 
+// endpoint to get similar items by id
+app.post("/api/similar", async (req, res) => {
+  const { id, top_k = 5 } = req.body || {};
+  if (!id) {
+    return res.status(400).json({ error: "missing id" });
+  }
+
+  try {
+    const sql = `
+      WITH target AS (
+        SELECT embedding_specter2 AS emb
+        FROM research_item
+        WHERE id = $1
+      )
+      SELECT
+        ri.id,
+        ri.data,
+        1 - (ri.embedding_specter2 <=> target.emb) AS score
+      FROM research_item AS ri, target
+      WHERE ri.id <> $1
+      ORDER BY ri.embedding_specter2 <=> target.emb
+      LIMIT $2;
+    `;
+
+    const { rows } = await pool.query(sql, [id, top_k]);
+
+    const results = rows.map((row) => ({
+      id: row.id,
+      title: cleanItem(row.data).title,
+      abstract: cleanItem(row.data).abstract,
+      text: cleanItem(row.data),
+      score: Number(row.score),
+    }));
+
+    res.json({ results });
+  } catch (err) {
+    console.error("Error in /api/similar:", err);
+    res.status(500).json({ error: "internal error" });
+  }
+});
+
+
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Semantic search backend listening on http://localhost:${PORT}`);
