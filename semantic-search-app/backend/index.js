@@ -62,6 +62,43 @@ function cleanItem(item) {
   return item;
 }
 
+async function getAuthorsByResearchItemIds(pool, researchItemIds) {
+  if (!researchItemIds || researchItemIds.length === 0) {
+    return {};
+  }
+
+  const sql = `
+    SELECT
+      id,
+      research_item_id,
+      verified_id,
+      position,
+      name,
+      is_corresponding_author,
+      is_first_coauthor,
+      is_last_coauthor,
+      is_oral_presentation
+    FROM author
+    WHERE research_item_id = ANY($1::int[])
+    ORDER BY research_item_id, position;
+  `;
+
+  const { rows } = await pool.query(sql, [researchItemIds]);
+
+  // group authors by research_item_id
+  const authorsByResearchItem = {};
+  for (const row of rows) {
+    const key = row.research_item_id;
+    if (!authorsByResearchItem[key]) {
+      authorsByResearchItem[key] = [];
+    }
+    authorsByResearchItem[key].push(row);
+  }
+
+  return authorsByResearchItem;
+}
+
+
 // endpoints
 app.post("/api/search", async (req, res) => {
   const { query, top_k = 5 } = req.body || {};
@@ -84,8 +121,6 @@ app.post("/api/search", async (req, res) => {
         ri.data,
         1 - (ri.embedding_specter2 <=> q.emb) AS score
       FROM research_item AS ri
-      JOIN research_item_type AS rit
-        ON ri.research_item_type_id = rit.id
       JOIN q
         ON TRUE
       WHERE ri.kind = 'verified'
@@ -95,11 +130,19 @@ app.post("/api/search", async (req, res) => {
 
     const { rows } = await pool.query(sql, [embStr, top_k]);
 
+    const researchItemIds = rows.map((r) => r.id);
+    const authorsByResearchItem = await getAuthorsByResearchItemIds(
+      pool,
+      researchItemIds
+    );
+
     const results = rows.map((row) => ({
       id: row.id,
       title: cleanItem(row.data).title,
       abstract: cleanItem(row.data).abstract,
       year: cleanItem(row.data).year,
+      authors: authorsByResearchItem[row.id] || [],
+      doi: cleanItem(row.data).doi,
       text: cleanItem(row.data),
       score: Number(row.score),
     }));
@@ -138,14 +181,25 @@ app.post("/api/similar", async (req, res) => {
 
     const { rows } = await pool.query(sql, [id, top_k]);
 
-    const results = rows.map((row) => ({
-      id: row.id,
-      title: cleanItem(row.data).title,
-      abstract: cleanItem(row.data).abstract,
-      year: cleanItem(row.data).year,
-      text: cleanItem(row.data),
-      score: Number(row.score),
-    }));
+    const researchItemIds = rows.map((r) => r.id);
+    const authorsByResearchItem = await getAuthorsByResearchItemIds(
+      pool,
+      researchItemIds
+    );
+
+    const results = rows.map((row) => {
+      const data = cleanItem(row.data);
+      return {
+        id: row.id,
+        title: data.title,
+        abstract: data.abstract,
+        year: data.year,
+        authors: authorsByResearchItem[row.id] || [],
+        doi: cleanItem(row.data).doi,
+        text: data,
+        score: Number(row.score),
+      };
+    });
 
     res.json({ results });
   } catch (err) {

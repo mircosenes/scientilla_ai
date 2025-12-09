@@ -33,41 +33,62 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+function buildItemHtml(r, { scoreLabel }) {
+  const authorsHtml = (r.authors || [])
+    .map((a) => {
+      const nameHtml = escapeHtml(a.name);
+      return a.verified_id
+        ? `<span class="result-author verified">${nameHtml}</span>`
+        : `<span class="result-author">${nameHtml}</span>`;
+    })
+    .join(", ");
+
+  const abstractText = escapeHtml(r.abstract);
+  const hrHtml = abstractText ? `<hr class="item-hr" />` : "";
+
+  const doiHtml = r.doi
+    ? `
+      <div class="result-doi">
+        DOI:
+        <span class="result-doi-link"
+              onclick="window.open('https://doi.org/${escapeHtml(r.doi)}', '_blank')">
+          ${escapeHtml(r.doi)}
+        </span>
+      </div>`
+    : "";
+
+  return `
+    <div class="result-item" data-id="${r.id}">
+      <div class="result-header">
+        <div class="result-score">${scoreLabel}: ${r.score.toFixed(3)}</div>
+        <div class="result-year">${escapeHtml(r.year)}</div>
+      </div>
+
+      <div class="result-title">${escapeHtml(r.title)}</div>
+      <div class="result-authors">${authorsHtml}</div>
+
+      ${hrHtml}
+      <div class="result-abstract">${abstractText}</div>
+
+      ${doiHtml}
+    </div>
+  `;
+}
+
+
 function renderResults(results) {
   if (!results.length) {
     resultsContainer.innerHTML = "<p>No results.</p>";
     return;
   }
 
-  const html = results
-    .map(
-      (r) => `
-      <div class="result-item" data-id="${r.id}">
-        <div class="result-score">search score: ${r.score.toFixed(3)}</div>
-        <div class="result-year">${escapeHtml(r.year)}</div>
-        <div class="result-title">${escapeHtml(r.title)}</div>
-        <div class="result-abstract">${escapeHtml(r.abstract)}</div>
-      </div>
-    `
-    )
+  resultsContainer.innerHTML = results
+    .map((r) => buildItemHtml(r, { scoreLabel: "search score" }))
     .join("");
 
-  resultsContainer.innerHTML = html;
-
-  // no body scroll when hovering similar items
-  const simillarItemsContainer = document.getElementById("similar-items");
-  similarItemsContainer.addEventListener("mouseenter", () => {
-    document.body.classList.add("body-no-scroll");
-  });
-  similarItemsContainer.addEventListener("mouseleave", () => {
-    document.body.classList.remove("body-no-scroll");
-  });
-
-  // add event listeners for similar items
   const items = resultsContainer.querySelectorAll(".result-item");
   items.forEach((el) => {
     el.addEventListener("click", () => {
-      // if already selected, deselect
       if (el.classList.contains("selected")) {
         el.classList.remove("selected");
         items.forEach((it) => it.classList.remove("blurred"));
@@ -75,20 +96,16 @@ function renderResults(results) {
         return;
       }
 
-      // select this item
       items.forEach((it) => it.classList.remove("selected"));
       items.forEach((it) => it.classList.add("blurred"));
       el.classList.add("selected");
       el.classList.remove("blurred");
 
-
-      const id = el.dataset.id;
-      if (id) {
-        loadSimilar(id);
-      }
+      loadSimilar(el.dataset.id);
     });
   });
 }
+
 
 async function loadSimilar(id) {
   similarItemsContainer.innerHTML = "<p>Loading similar items...</p>";
@@ -119,22 +136,11 @@ function renderSimilarItems(results) {
     return;
   }
 
-  const htmlList = results
-    .map(
-      (r) => `
-      <div class="similar-item" data-id="${r.id}">
-        <div class="similar-item-score">similarity score: ${r.score.toFixed(3)}</div>
-        <div class="similar-item-year">${escapeHtml(r.year)}</div>
-        <div class="similar-item-title">${escapeHtml(r.title)}</div>
-        <div class="similar-item-abstract">${escapeHtml(r.abstract)}</div>
-      </div>
-    `
-    )
+  similarItemsContainer.innerHTML = results
+    .map((r) => buildItemHtml(r, { scoreLabel: "similarity score" }))
     .join("");
-
-  similarItemsContainer.innerHTML = htmlList;
-
 }
+
 
 function escapeHtml(text) {
   const div = document.createElement("div");
