@@ -88,6 +88,7 @@ app.post("/api/search", async (req, res) => {
         ON ri.research_item_type_id = rit.id
       JOIN q
         ON TRUE
+      WHERE ri.kind = 'verified'
       ORDER BY ri.embedding_specter2 <=> q.emb
       LIMIT $2;
     `;
@@ -129,6 +130,7 @@ app.post("/api/similar", async (req, res) => {
         1 - (ri.embedding_specter2 <=> target.emb) AS score
       FROM research_item AS ri, target
       WHERE ri.id <> $1
+        AND ri.kind = 'verified'
       ORDER BY ri.embedding_specter2 <=> target.emb
       LIMIT $2;
     `;
