@@ -99,6 +99,7 @@ app.post("/api/search", async (req, res) => {
       id: row.id,
       title: cleanItem(row.data).title,
       abstract: cleanItem(row.data).abstract,
+      year: cleanItem(row.data).year,
       text: cleanItem(row.data),
       score: Number(row.score),
     }));
@@ -141,6 +142,7 @@ app.post("/api/similar", async (req, res) => {
       id: row.id,
       title: cleanItem(row.data).title,
       abstract: cleanItem(row.data).abstract,
+      year: cleanItem(row.data).year,
       text: cleanItem(row.data),
       score: Number(row.score),
     }));

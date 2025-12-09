@@ -44,6 +44,7 @@ function renderResults(results) {
       (r) => `
       <div class="result-item" data-id="${r.id}">
         <div class="result-score">search score: ${r.score.toFixed(3)}</div>
+        <div class="result-year">${escapeHtml(r.year)}</div>
         <div class="result-title">${escapeHtml(r.title)}</div>
         <div class="result-abstract">${escapeHtml(r.abstract)}</div>
       </div>
@@ -123,6 +124,7 @@ function renderSimilarItems(results) {
       (r) => `
       <div class="similar-item" data-id="${r.id}">
         <div class="similar-item-score">similarity score: ${r.score.toFixed(3)}</div>
+        <div class="similar-item-year">${escapeHtml(r.year)}</div>
         <div class="similar-item-title">${escapeHtml(r.title)}</div>
         <div class="similar-item-abstract">${escapeHtml(r.abstract)}</div>
       </div>
