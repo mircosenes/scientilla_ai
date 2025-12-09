@@ -61,7 +61,11 @@ function buildItemHtml(r, { scoreLabel }) {
     <div class="result-item" data-id="${r.id}">
       <div class="result-header">
         <div class="result-score">${scoreLabel}: ${r.score.toFixed(3)}</div>
-        <div class="result-year">${escapeHtml(r.year)}</div>
+        <div class="result-pills">
+          <div class="result-pill">${escapeHtml(r.type.label)}</div>
+          <div class="result-pill">${escapeHtml(r.type.type_label)}</div>
+          <div class="result-pill">${escapeHtml(r.year)}</div>
+        </div>
       </div>
 
       <div class="result-title">${escapeHtml(r.title)}</div>

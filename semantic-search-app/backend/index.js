@@ -98,6 +98,43 @@ async function getAuthorsByResearchItemIds(pool, researchItemIds) {
   return authorsByResearchItem;
 }
 
+async function getTypesByResearchItemIds(pool, researchItemIds) {
+  if (!researchItemIds || researchItemIds.length === 0) {
+    return {};
+  }
+
+  const sql = `
+    SELECT
+      ri.id AS research_item_id,
+      rit.id,
+      rit.key,
+      rit.label,
+      rit.type,
+      rit.type_label
+    FROM research_item AS ri
+    JOIN research_item_type AS rit
+      ON ri.research_item_type_id = rit.id
+    WHERE ri.id = ANY($1::int[]);
+  `;
+
+  const { rows } = await pool.query(sql, [researchItemIds]);
+
+  const typesByResearchItem = {};
+  for (const row of rows) {
+    const key = row.research_item_id;
+    typesByResearchItem[key] = {
+      id: row.id,
+      key: row.key,
+      label: row.label,
+      type: row.type,
+      type_label: row.type_label,
+    };
+  }
+
+  return typesByResearchItem;
+}
+
+
 
 // endpoints
 app.post("/api/search", async (req, res) => {
@@ -135,6 +172,10 @@ app.post("/api/search", async (req, res) => {
       pool,
       researchItemIds
     );
+    const typesByResearchItem = await getTypesByResearchItemIds(
+      pool,
+      researchItemIds
+    );
 
     const results = rows.map((row) => ({
       id: row.id,
@@ -142,6 +183,7 @@ app.post("/api/search", async (req, res) => {
       abstract: cleanItem(row.data).abstract,
       year: cleanItem(row.data).year,
       authors: authorsByResearchItem[row.id] || [],
+      type: typesByResearchItem[row.id] || null,
       doi: cleanItem(row.data).doi,
       text: cleanItem(row.data),
       score: Number(row.score),
@@ -186,6 +228,10 @@ app.post("/api/similar", async (req, res) => {
       pool,
       researchItemIds
     );
+    const typesByResearchItem = await getTypesByResearchItemIds(
+      pool,
+      researchItemIds
+    );
 
     const results = rows.map((row) => {
       const data = cleanItem(row.data);
@@ -195,6 +241,7 @@ app.post("/api/similar", async (req, res) => {
         abstract: data.abstract,
         year: data.year,
         authors: authorsByResearchItem[row.id] || [],
+        type: typesByResearchItem[row.id] || null,
         doi: cleanItem(row.data).doi,
         text: data,
         score: Number(row.score),
