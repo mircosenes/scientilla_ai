@@ -2,6 +2,19 @@ const form = document.getElementById("search-form");
 const resultsContainer = document.getElementById("results");
 const similarItemsContainer = document.getElementById("similar-items");
 
+const yearInput = document.getElementById("filter-year");
+const authorInput = document.getElementById("filter-author");
+const sourceTitleInput = document.getElementById("filter-source-title");
+const sourceTypeInput = document.getElementById("filter-source-type");
+
+const clearFiltersBtn = document.getElementById("clear-filters");
+clearFiltersBtn.addEventListener("click", () => {
+  yearInput.value = "";
+  authorInput.value = "";
+  sourceTitleInput.value = "";
+  sourceTypeInput.value = "";
+});
+
 const API_BASE = "http://localhost:8000/api";
 
 form.addEventListener("submit", async (e) => {
@@ -13,11 +26,26 @@ form.addEventListener("submit", async (e) => {
   resultsContainer.innerHTML = "<p>Searching...</p>";
   similarItemsContainer.innerHTML = ""; // clear similar items
 
+  // filters
+  const year = yearInput.value.trim();
+  const author = authorInput.value.trim();
+  const source_title = sourceTitleInput.value.trim();
+  const source_type = sourceTypeInput.value.trim();
+
   try {
     const response = await fetch(`${API_BASE}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, top_k: 10 }),
+      body: JSON.stringify({
+        query,
+        top_k: 10,
+        filters: {
+          year: year || undefined,
+          author: author || undefined,
+          source_title: source_title || undefined,
+          source_type: source_type || undefined,
+        },
+      }),
     });
 
     if (!response.ok) {
@@ -64,8 +92,6 @@ function buildVerifiedEntitiesHtml(r) {
   `;
 }
 
-
-
 function buildItemHtml(r, { scoreLabel }) {
   const authorsHtml = (r.authors || [])
     .map((a) => {
@@ -92,7 +118,7 @@ function buildItemHtml(r, { scoreLabel }) {
     : "";
 
   const scopusHtml = r.scopus_id
-  ? `
+    ? `
     <div class="result-doi">
       Scopus:
       <span class="result-doi-link"
@@ -103,7 +129,7 @@ function buildItemHtml(r, { scoreLabel }) {
         ${escapeHtml(r.scopus_id)}
       </span>
     </div>`
-  : "";
+    : "";
 
   return `
     <div class="result-item" data-id="${r.id}">
@@ -111,20 +137,20 @@ function buildItemHtml(r, { scoreLabel }) {
         <div class="result-score">${scoreLabel}: ${r.score.toFixed(3)}</div>
         <div class="result-pills">
           ${verifiedEntitiesHtml}
-          <div class="result-pill">${escapeHtml(r.type.label)}</div>
-          <div class="result-pill">${escapeHtml(r.type.type_label)}</div>
-          <div class="result-pill">${escapeHtml(r.year)}</div>
+          <div class="result-pill">${escapeHtml(r?.type?.label)}</div>
+          <div class="result-pill">${escapeHtml(r?.type?.type_label)}</div>
+          <div class="result-pill">${escapeHtml(r?.year)}</div>
         </div>
       </div>
 
-      <div class="result-title">${escapeHtml(r.title)}</div>
+      <div class="result-title">${escapeHtml(r?.title)}</div>
       <div class="result-authors">${authorsHtml}</div>
 
       ${hrHtml}
       <div class="result-abstract">${abstractText}</div>
       <div class="result-source">  
         <i class="fa-solid fa-newspaper result-source-icon" aria-hidden="true"></i>
-        <em>${r.source.title}</em>
+        <em>${r?.source?.title}</em>
       </div>
 
       ${doiHtml}

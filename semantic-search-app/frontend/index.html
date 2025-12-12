@@ -29,6 +29,17 @@
             placeholder="Try queries like 'machine learning in healthcare', 'quantum computing applications'..." />
           <button type="submit">Search</button>
         </form>
+        <div class="filters">
+          <div>
+            <input type="text" id="filter-year" placeholder="Year (e.g. 2015)" />
+            <input type="text" id="filter-author" placeholder="Author name (e.g. Rossi)" />
+          </div>
+          <div>
+            <input type="text" id="filter-source-title" placeholder="Source title (e.g. Biomolecules)" />
+            <input type="text" id="filter-source-type" placeholder="Source type (e.g. journal)" />
+          </div>
+          <button type="button" id="clear-filters">Clear</button>
+        </div>
         <section id="results"></section>
       </div>
       <div class="similarity-box">

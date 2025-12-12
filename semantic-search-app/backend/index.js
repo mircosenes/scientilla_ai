@@ -184,20 +184,78 @@ async function getVerifiedByResearchItemIds(pool, researchItemIds) {
   return verifiedByResearchItem;
 }
 
+function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
+  const where = [];
+  const params = [];
+  let i = startingParamIndex;
+
+  const has = (v) => v !== undefined && v !== null && String(v).trim() !== "";
+
+  // year
+  if (has(filters.year)) {
+    const year = String(filters.year).trim();
+    if (!/^\d{4}$/.test(year)) {
+      throw new Error("invalid year");
+    }
+
+    where.push(`(ri.data->>'year') = $${i}`);
+    params.push(String(filters.year).trim());
+    i++;
+  }
+
+  // author name - author table
+  if (has(filters.author)) {
+    where.push(`
+      EXISTS (
+        SELECT 1
+        FROM author a
+        WHERE a.research_item_id = ri.id
+          AND a.name ILIKE $${i}
+      )
+    `);
+    params.push(`%${String(filters.author).trim()}%`);
+    i++;
+  }
+
+  // source title
+  if (has(filters.source_title)) {
+    where.push(`(ri.data->'source'->>'title') ILIKE $${i}`);
+    params.push(`%${String(filters.source_title).trim()}%`);
+    i++;
+  }
+
+  // source type
+  if (has(filters.source_type)) {
+    where.push(`
+      (
+        (ri.data->'sourceType'->>'key') ILIKE $${i}
+        OR (ri.data->'sourceType'->>'label') ILIKE $${i}
+        OR (ri.data->'source'->>'sourceTypeId') = $${i}
+      )
+    `);
+    params.push(String(filters.source_type).trim());
+    i++;
+  }
+
+  const clause = where.length ? ` AND ${where.join(" AND ")}` : "";
+  return { clause, params, nextParamIndex: i };
+}
 
 
 
 // endpoints
 app.post("/api/search", async (req, res) => {
-  const { query, top_k = 5 } = req.body || {};
+  const { query, top_k = 5, filters = {} } = req.body || {};
   if (!query || !query.trim()) {
-    return res.status(400).json({ error: "query mancante" });
+    return res.status(400).json({ error: "missing query" });
   }
 
   try {
     // 1) get embedding from python
     const embedding = await getEmbeddingFromPython(query.trim());
     const embStr = embeddingToPgvectorStr(embedding);
+
+    const { clause, params } = buildFiltersWhereClause(filters, 2);
 
     // 2) perform vector search in Postgres
     const sql = `
@@ -209,14 +267,14 @@ app.post("/api/search", async (req, res) => {
         ri.data,
         1 - (ri.embedding_specter2 <=> q.emb) AS score
       FROM research_item AS ri
-      JOIN q
-        ON TRUE
+      JOIN q ON TRUE
       WHERE ri.kind = 'verified'
+      ${clause}
       ORDER BY ri.embedding_specter2 <=> q.emb
-      LIMIT $2;
+      LIMIT $${2 + params.length}
     `;
 
-    const { rows } = await pool.query(sql, [embStr, top_k]);
+    const { rows } = await pool.query(sql, [embStr, ...params, top_k]);
 
     const researchItemIds = rows.map((r) => r.id);
     const authorsByResearchItem = await getAuthorsByResearchItemIds(

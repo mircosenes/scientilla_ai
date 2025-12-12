@@ -280,3 +280,28 @@ button:hover {
 #similar-items::-webkit-scrollbar-thumb {
   border-radius: 3px;
 }
+
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.6rem 0;
+  flex-wrap: wrap;
+}
+
+.filters input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cacaca;
+  border-radius: 0.625rem;
+  background: #fff;
+}
+
+#clear-filters {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cacaca;
+  border-radius: 0.625rem;
+  background: #fff;
+  cursor: pointer;
+}
