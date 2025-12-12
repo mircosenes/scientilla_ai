@@ -239,6 +239,8 @@ app.post("/api/search", async (req, res) => {
         authors: authorsByResearchItem[row.id] || [],
         type: typesByResearchItem[row.id] || null,
         verified: verifiedByResearchItem[row.id] || [],
+        source: data.source,
+        scopus_id: data.scopusId || data.scopus_id,
         doi: data.doi,
         text: data,
         score: Number(row.score),
@@ -302,6 +304,8 @@ app.post("/api/similar", async (req, res) => {
         type: typesByResearchItem[row.id] || null,
         verified: verifiedByResearchItem[row.id] || [],
         doi: data.doi,
+        source: data.source,
+        scopus_id: data.scopusId || data.scopus_id,
         text: data,
         score: Number(row.score),
       };

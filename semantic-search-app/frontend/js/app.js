@@ -91,6 +91,20 @@ function buildItemHtml(r, { scoreLabel }) {
       </div>`
     : "";
 
+  const scopusHtml = r.scopus_id
+  ? `
+    <div class="result-doi">
+      Scopus:
+      <span class="result-doi-link"
+            onclick="window.open(
+              'https://www.scopus.com/record/display.uri?eid=2-s2.0-${escapeHtml(r.scopus_id)}',
+              '_blank'
+            )">
+        ${escapeHtml(r.scopus_id)}
+      </span>
+    </div>`
+  : "";
+
   return `
     <div class="result-item" data-id="${r.id}">
       <div class="result-header">
@@ -108,8 +122,10 @@ function buildItemHtml(r, { scoreLabel }) {
 
       ${hrHtml}
       <div class="result-abstract">${abstractText}</div>
+      <div class="result-source"><em>${r.source.title}</em></div>
 
       ${doiHtml}
+      ${scopusHtml}
     </div>
   `;
 }
