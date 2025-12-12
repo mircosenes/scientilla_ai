@@ -134,6 +134,57 @@ async function getTypesByResearchItemIds(pool, researchItemIds) {
   return typesByResearchItem;
 }
 
+async function getVerifiedByResearchItemIds(pool, researchItemIds) {
+  if (!researchItemIds || researchItemIds.length === 0) {
+    return {};
+  }
+
+  const sql = `
+    SELECT
+      v.id AS verified_id,
+      v.research_item_id,
+      v.research_entity_id,
+      v.is_favorite,
+      v.is_public,
+      re.id AS entity_id,
+      re.type AS entity_type,
+      re.code AS entity_code,
+      re.data AS entity_data
+    FROM verified v
+    LEFT JOIN research_entity re
+      ON re.id = v.research_entity_id
+    WHERE v.research_item_id = ANY($1::int[])
+    ORDER BY v.research_item_id, v.research_entity_id;
+  `;
+
+  const { rows } = await pool.query(sql, [researchItemIds]);
+
+  const verifiedByResearchItem = {};
+  for (const row of rows) {
+    const key = row.research_item_id;
+    if (!verifiedByResearchItem[key]) verifiedByResearchItem[key] = [];
+
+    verifiedByResearchItem[key].push({
+      id: row.verified_id,
+      research_item_id: row.research_item_id,
+      research_entity_id: row.research_entity_id,
+      is_favorite: row.is_favorite,
+      is_public: row.is_public,
+      research_entity: row.entity_id
+        ? {
+          id: row.entity_id,
+          type: row.entity_type,
+          code: row.entity_code,
+          data: row.entity_data,
+        }
+        : null,
+    });
+  }
+
+  return verifiedByResearchItem;
+}
+
+
 
 
 // endpoints
@@ -176,18 +227,24 @@ app.post("/api/search", async (req, res) => {
       pool,
       researchItemIds
     );
+    const verifiedByResearchItem = await getVerifiedByResearchItemIds(pool, researchItemIds);
 
-    const results = rows.map((row) => ({
-      id: row.id,
-      title: cleanItem(row.data).title,
-      abstract: cleanItem(row.data).abstract,
-      year: cleanItem(row.data).year,
-      authors: authorsByResearchItem[row.id] || [],
-      type: typesByResearchItem[row.id] || null,
-      doi: cleanItem(row.data).doi,
-      text: cleanItem(row.data),
-      score: Number(row.score),
-    }));
+    const results = rows.map((row) => {
+      const data = cleanItem(row.data);
+      return {
+        id: row.id,
+        title: data.title,
+        abstract: data.abstract,
+        year: data.year,
+        authors: authorsByResearchItem[row.id] || [],
+        type: typesByResearchItem[row.id] || null,
+        verified: verifiedByResearchItem[row.id] || [],
+        doi: data.doi,
+        text: data,
+        score: Number(row.score),
+      };
+    });
+
 
     res.json({ results });
   } catch (err) {
@@ -232,6 +289,7 @@ app.post("/api/similar", async (req, res) => {
       pool,
       researchItemIds
     );
+    const verifiedByResearchItem = await getVerifiedByResearchItemIds(pool, researchItemIds);
 
     const results = rows.map((row) => {
       const data = cleanItem(row.data);
@@ -242,11 +300,13 @@ app.post("/api/similar", async (req, res) => {
         year: data.year,
         authors: authorsByResearchItem[row.id] || [],
         type: typesByResearchItem[row.id] || null,
-        doi: cleanItem(row.data).doi,
+        verified: verifiedByResearchItem[row.id] || [],
+        doi: data.doi,
         text: data,
         score: Number(row.score),
       };
     });
+
 
     res.json({ results });
   } catch (err) {

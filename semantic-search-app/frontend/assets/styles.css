@@ -130,6 +130,65 @@ button:hover {
   margin-right: 0.5rem;
 }
 
+.verified-pill {
+  background-color: whitesmoke;
+  color: #0b61a4;
+  position: relative;
+  cursor: pointer;
+}
+
+.verified-tooltip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.35rem);
+  transform: translateX(-50%);
+  z-index: 50;
+
+  display: none;
+  min-width: 140px;
+  max-width: 220px;
+  max-height: 180px;
+  overflow-y: auto;
+
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.5rem;
+
+  background: whitesmoke;
+  color: #0b61a4;
+  font-size: 0.78rem;
+  line-height: 1.15;
+
+  box-shadow:
+    0 0.3rem 0.6rem rgba(0, 0, 0, 0.10),
+    0 0.1rem 0.2rem rgba(0, 0, 0, 0.06);
+  }
+
+
+.verified-info-icon {
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+.verified-pill:hover .verified-info-icon {
+  opacity: 1;
+}
+
+.verified-pill:hover .verified-tooltip {
+  display: block;
+}
+
+.verified-tooltip-item {
+  padding: 0.15rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.verified-tooltip-item + .verified-tooltip-item {
+  margin-top: 0.15rem;
+  padding-top: 0.15rem;
+}
+
 .result-title {
   font-size: 1.1rem;
   font-weight: 600;

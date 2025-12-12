@@ -33,6 +33,39 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+function getEntityDisplayName(entity) {
+  const p = entity?.data || {};
+  const name = (p.name || "").trim();
+  const surname = (p.surname || "").trim();
+  return (name + (surname ? ` ${surname}` : "")).trim();
+}
+
+function buildVerifiedEntitiesHtml(r) {
+  const verified = Array.isArray(r.verified) ? r.verified : [];
+  const names = verified
+    .map((v) => getEntityDisplayName(v.research_entity))
+    .filter(Boolean);
+
+  if (names.length === 0) return "";
+
+  const uniqueNames = Array.from(new Set(names));
+  const listItemsHtml = uniqueNames
+    .map((n) => `<div class="verified-tooltip-item">${escapeHtml(n)}</div>`)
+    .join("");
+
+  return `
+    <span class="result-pill verified-pill">
+      Verified by ${uniqueNames.length}
+      <span class="verified-info-icon" aria-hidden="true">ⓘ</span>
+      <div class="verified-tooltip" role="tooltip">
+        ${listItemsHtml}
+      </div>
+    </span>
+  `;
+}
+
+
+
 function buildItemHtml(r, { scoreLabel }) {
   const authorsHtml = (r.authors || [])
     .map((a) => {
@@ -43,6 +76,7 @@ function buildItemHtml(r, { scoreLabel }) {
     })
     .join(", ");
 
+  const verifiedEntitiesHtml = buildVerifiedEntitiesHtml(r);
   const abstractText = escapeHtml(r.abstract);
   const hrHtml = abstractText ? `<hr class="item-hr" />` : "";
 
@@ -62,6 +96,7 @@ function buildItemHtml(r, { scoreLabel }) {
       <div class="result-header">
         <div class="result-score">${scoreLabel}: ${r.score.toFixed(3)}</div>
         <div class="result-pills">
+          ${verifiedEntitiesHtml}
           <div class="result-pill">${escapeHtml(r.type.label)}</div>
           <div class="result-pill">${escapeHtml(r.type.type_label)}</div>
           <div class="result-pill">${escapeHtml(r.year)}</div>
