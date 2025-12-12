@@ -122,7 +122,10 @@ function buildItemHtml(r, { scoreLabel }) {
 
       ${hrHtml}
       <div class="result-abstract">${abstractText}</div>
-      <div class="result-source"><em>${r.source.title}</em></div>
+      <div class="result-source">  
+        <i class="fa-solid fa-newspaper result-source-icon" aria-hidden="true"></i>
+        <em>${r.source.title}</em>
+      </div>
 
       ${doiHtml}
       ${scopusHtml}
