@@ -5,10 +5,7 @@
   <meta charset="UTF-8" />
   <title>Semantic Search</title>
   <link rel="stylesheet" href="assets/styles.css" />
-  <link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
 </head>
 
@@ -18,7 +15,8 @@
     <h1>Explore Scientilla Research Output with Semantic Search</h1>
 
     <p class="description">
-      <strong>Search</strong> through Scientilla's research database using natural language queries and <strong>click</strong> on results to find similar items.
+      <strong>Search</strong> through Scientilla's research database using natural language queries and
+      <strong>click</strong> on results to find similar items.
     </p>
 
     <div class="main-box">
@@ -35,15 +33,16 @@
             <input type="text" id="filter-author" placeholder="Author name (e.g. Rossi)" />
           </div>
           <div>
-            <input type="text" id="filter-source-title" placeholder="Source title (e.g. Biomolecules)" />
-            <input type="text" id="filter-source-type" placeholder="Source type (e.g. journal)" />
-          </div>
-          <div>
             <input type="text" id="filter-type" placeholder="Type (e.g. Article)" />
             <input type="text" id="filter-category" placeholder="Category (e.g. Publication)" />
           </div>
-          <button type="button" id="clear-filters">Clear</button>
-        </div>
+          <div>
+            <input type="text" id="filter-source-title" placeholder="Source title (e.g. Biomolecules)" />
+            <input type="text" id="filter-source-type" placeholder="Source type (e.g. journal)" />
+          </div>
+        </div> 
+        <button type="button" id="clear-filters">Clear</button>
+
         <section id="results"></section>
       </div>
       <div class="similarity-box">

@@ -283,16 +283,21 @@ button:hover {
 
 
 .filters {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
   margin: 0.6rem 0;
+  padding: 1rem;
+  margin-right: 3rem;
   flex-wrap: wrap;
+  border: 1px solid #e7e7e7;
+  border-radius: 0.875rem;
+  background: #fafafa;
 }
 
 .filters input {
-  flex: 1;
-  min-width: 160px;
-  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.75rem;
   border: 1px solid #cacaca;
   border-radius: 0.625rem;
   background: #fff;
