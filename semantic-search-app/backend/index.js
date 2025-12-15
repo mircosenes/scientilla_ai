@@ -237,6 +237,21 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
     i++;
   }
 
+  // type
+  if (has(filters.type)) {
+    where.push(`(rit.key ILIKE $${i} OR rit.label ILIKE $${i})`);
+    params.push(`%${String(filters.type).trim()}%`);
+    i++;
+  }
+
+  // category
+  if (has(filters.category)) {
+    where.push(`(rit.type::text ILIKE $${i} OR rit.type_label::text ILIKE $${i})`);
+    params.push(`%${String(filters.category).trim()}%`);
+    i++;
+  }
+
+
   const clause = where.length ? ` AND ${where.join(" AND ")}` : "";
   return { clause, params, nextParamIndex: i };
 }
@@ -256,62 +271,99 @@ app.post("/api/search", async (req, res) => {
     const embStr = embeddingToPgvectorStr(embedding);
 
     const { clause, params } = buildFiltersWhereClause(filters, 2);
-
-    // 2) perform vector search in Postgres
-    const sql = `
-      WITH q AS (
-        SELECT $1::vector AS emb
-      )
-      SELECT
-        ri.id,
-        ri.data,
-        1 - (ri.embedding_specter2 <=> q.emb) AS score
-      FROM research_item AS ri
-      JOIN q ON TRUE
-      WHERE ri.kind = 'verified'
-      ${clause}
-      ORDER BY ri.embedding_specter2 <=> q.emb
-      LIMIT $${2 + params.length}
-    `;
-
-    const { rows } = await pool.query(sql, [embStr, ...params, top_k]);
-
-    const researchItemIds = rows.map((r) => r.id);
-    const authorsByResearchItem = await getAuthorsByResearchItemIds(
-      pool,
-      researchItemIds
-    );
-    const typesByResearchItem = await getTypesByResearchItemIds(
-      pool,
-      researchItemIds
-    );
-    const verifiedByResearchItem = await getVerifiedByResearchItemIds(pool, researchItemIds);
-
-    const results = rows.map((row) => {
-      const data = cleanItem(row.data);
-      return {
-        id: row.id,
-        title: data.title,
-        abstract: data.abstract,
-        year: data.year,
-        authors: authorsByResearchItem[row.id] || [],
-        type: typesByResearchItem[row.id] || null,
-        verified: verifiedByResearchItem[row.id] || [],
-        source: data.source,
-        scopus_id: data.scopusId || data.scopus_id,
-        doi: data.doi,
-        text: data,
-        score: Number(row.score),
-      };
-    });
+    const hasFilters = clause.trim().length > 0;
 
 
-    res.json({ results });
+    // 2) perform vector search in Postgres 
+    
+    const sql = hasFilters
+      ? `
+        WITH filtered AS MATERIALIZED (
+          SELECT
+            ri.id,
+            ri.data,
+            ri.embedding_specter2,
+            ri.research_item_type_id
+          FROM research_item ri
+          LEFT JOIN research_item_type rit
+            ON rit.id = ri.research_item_type_id
+          WHERE ri.kind = 'verified'
+          ${clause}
+        )
+        SELECT
+          f.id,
+          f.data,
+          1 - (f.embedding_specter2 <=> $1::vector) AS score
+        FROM filtered f
+        ORDER BY f.embedding_specter2 <=> $1::vector
+        LIMIT $${2 + params.length};
+      `
+      : `
+        SELECT
+          ri.id,
+          ri.data,
+          1 - (ri.embedding_specter2 <=> $1::vector) AS score
+        FROM research_item AS ri
+        LEFT JOIN research_item_type rit
+          ON rit.id = ri.research_item_type_id
+        WHERE ri.kind = 'verified'
+        ORDER BY ri.embedding_specter2 <=> $1::vector
+        LIMIT $${2 + params.length};
+      `;
+
+
+    // HNSW tuning
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SET LOCAL hnsw.ef_search = 150");
+
+      const { rows } = await client.query(sql, [embStr, ...params, top_k]);
+      await client.query("COMMIT");
+
+      const researchItemIds = rows.map((r) => r.id);
+      const authorsByResearchItem = await getAuthorsByResearchItemIds(
+        pool,
+        researchItemIds
+      );
+      const typesByResearchItem = await getTypesByResearchItemIds(
+        pool,
+        researchItemIds
+      );
+      const verifiedByResearchItem = await getVerifiedByResearchItemIds(pool, researchItemIds);
+
+      const results = rows.map((row) => {
+        const data = cleanItem(row.data);
+        return {
+          id: row.id,
+          title: data.title,
+          abstract: data.abstract,
+          year: data.year,
+          authors: authorsByResearchItem[row.id] || [],
+          type: typesByResearchItem[row.id] || null,
+          verified: verifiedByResearchItem[row.id] || [],
+          source: data.source,
+          scopus_id: data.scopusId || data.scopus_id,
+          doi: data.doi,
+          text: data,
+          score: Number(row.score),
+        };
+      });
+
+      return res.json({ results });
+    } catch (err) {
+      try { await client.query("ROLLBACK"); } catch (_) { }
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error("Error in /api/search:", err);
     res.status(500).json({ error: "internal error" });
   }
 });
+
+
 
 // endpoint to get similar items by id
 app.post("/api/similar", async (req, res) => {

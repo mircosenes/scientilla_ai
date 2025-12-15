@@ -6,6 +6,8 @@ const yearInput = document.getElementById("filter-year");
 const authorInput = document.getElementById("filter-author");
 const sourceTitleInput = document.getElementById("filter-source-title");
 const sourceTypeInput = document.getElementById("filter-source-type");
+const typeInput = document.getElementById("filter-type");
+const categoryInput = document.getElementById("filter-category");
 
 const clearFiltersBtn = document.getElementById("clear-filters");
 clearFiltersBtn.addEventListener("click", () => {
@@ -13,6 +15,8 @@ clearFiltersBtn.addEventListener("click", () => {
   authorInput.value = "";
   sourceTitleInput.value = "";
   sourceTypeInput.value = "";
+  typeInput.value = "";
+  categoryInput.value = "";
 });
 
 const API_BASE = "http://localhost:8000/api";
@@ -31,6 +35,8 @@ form.addEventListener("submit", async (e) => {
   const author = authorInput.value.trim();
   const source_title = sourceTitleInput.value.trim();
   const source_type = sourceTypeInput.value.trim();
+  const type = typeInput.value.trim();
+  const category = categoryInput.value.trim();
 
   try {
     const response = await fetch(`${API_BASE}/search`, {
@@ -44,6 +50,8 @@ form.addEventListener("submit", async (e) => {
           author: author || undefined,
           source_title: source_title || undefined,
           source_type: source_type || undefined,
+          type : type || undefined,
+          category : category || undefined
         },
       }),
     });
