@@ -1,0 +1,45 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: scientilla_ai-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks: [appnet]
+
+  embedding-service:
+    build: ./embedding-service
+    environment:
+      - MODEL_NAME=allenai/specter2_base
+      - ADAPTER_NAME=allenai/specter2_adhoc_query
+    ports:
+      - "8000:8000"
+    volumes:
+       - hf-cache:/root/.cache/huggingface
+    networks: [appnet]
+
+  node-app:
+    build: ./semantic-search-app/backend
+    environment:
+      - PORT=3000
+      - EMBED_URL=http://embedding-service:8000
+      - DB_URL=postgresql://postgres:postgres@db:5432/postgres
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - embedding-service
+    networks: [appnet]
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  dbdata:
+  hf-cache:

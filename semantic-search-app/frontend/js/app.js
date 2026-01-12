@@ -19,7 +19,9 @@ clearFiltersBtn.addEventListener("click", () => {
   categoryInput.value = "";
 });
 
-const API_BASE = "http://localhost:8000/api";
+// const API_BASE = "http://localhost:8000/api";
+const API_BASE = "http://localhost:3000/api";
+
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();

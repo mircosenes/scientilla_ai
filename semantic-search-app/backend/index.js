@@ -17,6 +17,34 @@ function embeddingToPgvectorStr(vec) {
   return "[" + vec.map((x) => Number(x).toString()).join(",") + "]";
 }
 
+const EMBED_URL = process.env.EMBED_URL || "http://localhost:8000";
+
+
+async function getEmbeddingFromService(query) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const r = await fetch(`${EMBED_URL}/embed`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+      signal: controller.signal,
+    });
+
+    if (!r.ok) {
+      const text = await r.text();
+      throw new Error(`Embedding service error: ${r.status} ${text}`);
+    }
+
+    const obj = await r.json();
+    if (obj.error) throw new Error(obj.error);
+    return obj.embedding;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // call python script to get embedding
 function getEmbeddingFromPython(query) {
   return new Promise((resolve, reject) => {
@@ -267,7 +295,8 @@ app.post("/api/search", async (req, res) => {
 
   try {
     // 1) get embedding from python
-    const embedding = await getEmbeddingFromPython(query.trim());
+    // const embedding = await getEmbeddingFromPython(query.trim());
+    const embedding = await getEmbeddingFromService(query.trim());
     const embStr = embeddingToPgvectorStr(embedding);
 
     const { clause, params } = buildFiltersWhereClause(filters, 2);
