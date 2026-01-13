@@ -52,8 +52,8 @@ form.addEventListener("submit", async (e) => {
           author: author || undefined,
           source_title: source_title || undefined,
           source_type: source_type || undefined,
-          type : type || undefined,
-          category : category || undefined
+          type: type || undefined,
+          category: category || undefined
         },
       }),
     });
@@ -102,7 +102,7 @@ function buildVerifiedEntitiesHtml(r) {
   `;
 }
 
-function buildItemHtml(r, { scoreLabel }) {
+function buildItemHtml(r) {
   const authorsHtml = (r.authors || [])
     .map((a) => {
       const nameHtml = escapeHtml(a.name);
@@ -144,7 +144,16 @@ function buildItemHtml(r, { scoreLabel }) {
   return `
     <div class="result-item" data-id="${r.id}">
       <div class="result-header">
-        <div class="result-score">${scoreLabel}: ${r.score.toFixed(3)}</div>
+        ${r.dense_score != null ? `
+          <div class="result-score">
+              specter2: ${r.dense_score.toFixed(3)}${r.dense_rank ? `, rank: ${r.dense_rank}` : ''}
+          </div>
+      ` : ''}
+        ${r.lex_score != null ? `
+          <div class="result-score">
+              bm25: ${r.lex_score.toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ''}
+          </div>
+        ` : ''}
         <div class="result-pills">
           ${verifiedEntitiesHtml}
           <div class="result-pill">${escapeHtml(r?.type?.label)}</div>
@@ -177,7 +186,7 @@ function renderResults(results) {
   }
 
   resultsContainer.innerHTML = results
-    .map((r) => buildItemHtml(r, { scoreLabel: "search score" }))
+    .map((r) => buildItemHtml(r))
     .join("");
 
   const items = resultsContainer.querySelectorAll(".result-item");

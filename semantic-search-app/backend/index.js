@@ -284,28 +284,78 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
   return { clause, params, nextParamIndex: i };
 }
 
+function rrfFuse({ denseRows, lexRows, k = 60 }) {
+  const acc = new Map();
 
+  denseRows.forEach((r, idx) => {
+    const id = r.id;
+    const prev = acc.get(id) || {
+      id,
+      rrf: 0,
+      dense_rank: null,
+      lex_rank: null,
+      dense_score: null,
+      lex_score: null,
+      data: null,
+    };
+    prev.dense_rank = idx + 1;
+    prev.dense_score = Number(r.score);
+    prev.data = r.data ?? prev.data;
+    prev.rrf += 1 / (k + (idx + 1));
+    acc.set(id, prev);
+  });
+
+  lexRows.forEach((r, idx) => {
+    const id = r.id;
+    const prev = acc.get(id) || {
+      id,
+      rrf: 0,
+      dense_rank: null,
+      lex_rank: null,
+      dense_score: null,
+      lex_score: null,
+      data: null,
+    };
+    prev.lex_rank = idx + 1;
+    prev.lex_score = Number(r.score);
+    prev.data = r.data ?? prev.data;
+    prev.rrf += 1 / (k + (idx + 1));
+    acc.set(id, prev);
+  });
+
+  return [...acc.values()].sort((a, b) => b.rrf - a.rrf);
+}
 
 // endpoints
 app.post("/api/search", async (req, res) => {
-  const { query, top_k = 5, filters = {} } = req.body || {};
+  const { query, top_k = 5, filters = {}, mode = "hybrid" } = req.body || {};
   if (!query || !query.trim()) {
     return res.status(400).json({ error: "missing query" });
   }
 
-  try {
-    // 1) get embedding from python
-    // const embedding = await getEmbeddingFromPython(query.trim());
-    const embedding = await getEmbeddingFromService(query.trim());
-    const embStr = embeddingToPgvectorStr(embedding);
+  const MODE = String(mode || "hybrid").trim().toLowerCase();
+  const VALID = new Set(["hybrid", "specter2", "bm25"]);
+  if (!VALID.has(MODE)) {
+    return res.status(400).json({ error: "invalid mode (use: hybrid|specter2|bm25)" });
+  }
 
+  // determine TOPK for dense and lex searches
+  const TOPK = Math.max(200, top_k * 80);
+  const TOPK_DENSE = TOPK;
+  const TOPK_LEX = TOPK;
+
+  // RRF parameterized on retrieval depth
+  const RRF_K = Math.round(TOPK / 4);
+
+  try {
+    const q = query.trim();
+
+    // build filters
     const { clause, params } = buildFiltersWhereClause(filters, 2);
     const hasFilters = clause.trim().length > 0;
 
-
-    // 2) perform vector search in Postgres 
-    
-    const sql = hasFilters
+    // 1) build SQL for dense vector search (SPECTER2)
+    const denseSql = hasFilters
       ? `
         WITH filtered AS MATERIALIZED (
           SELECT
@@ -340,17 +390,124 @@ app.post("/api/search", async (req, res) => {
         LIMIT $${2 + params.length};
       `;
 
+    // 2) build SQL for lexical search (FTS)
+    const lexSql = hasFilters
+      ? `
+        WITH filtered AS MATERIALIZED (
+          SELECT
+            ri.id,
+            ri.data,
+            ri.fts,
+            ri.research_item_type_id
+          FROM research_item ri
+          LEFT JOIN research_item_type rit
+            ON rit.id = ri.research_item_type_id
+          WHERE ri.kind = 'verified'
+          ${clause}
+        )
+        SELECT
+          f.id,
+          f.data,
+          ts_rank_cd(f.fts, qq) AS score
+        FROM filtered f,
+             websearch_to_tsquery('english', $1) qq
+        WHERE f.fts @@ qq
+        ORDER BY score DESC
+        LIMIT $${2 + params.length};
+      `
+      : `
+        SELECT
+          ri.id,
+          ri.data,
+          ts_rank_cd(ri.fts, qq) AS score
+        FROM research_item ri,
+             websearch_to_tsquery('english', $1) qq
+        WHERE ri.kind = 'verified'
+          AND ri.fts @@ qq
+        ORDER BY score DESC
+        LIMIT $${2 + params.length};
+      `;
 
-    // HNSW tuning
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      await client.query("SET LOCAL hnsw.ef_search = 150");
 
-      const { rows } = await client.query(sql, [embStr, ...params, top_k]);
+      let fused = [];
+
+      switch (MODE) {
+        case "specter2": {
+          const embedding = await getEmbeddingFromService(q);
+          const embStr = embeddingToPgvectorStr(embedding);
+
+          // HNSW tuning
+          await client.query("SET LOCAL hnsw.ef_search = 150");
+
+          const denseRes = await client.query(
+            denseSql,
+            [embStr, ...params, TOPK_DENSE]
+          );
+
+          fused = denseRes.rows.map((r, idx) => ({
+            id: r.id,
+            data: r.data,
+            rrf: Number(r.score),
+            dense_rank: idx + 1,
+            lex_rank: null,
+            dense_score: Number(r.score),
+            lex_score: null,
+          }));
+          break;
+        }
+
+        case "bm25": {
+          const lexRes = await client.query(
+            lexSql,
+            [q, ...params, TOPK_LEX]
+          );
+
+          fused = lexRes.rows.map((r, idx) => ({
+            id: r.id,
+            data: r.data,
+            rrf: Number(r.score),
+            dense_rank: null,
+            lex_rank: idx + 1,
+            dense_score: null,
+            lex_score: Number(r.score),
+          }));
+          break;
+        }
+
+        case "hybrid":
+        default: {
+          const embedding = await getEmbeddingFromService(q);
+          const embStr = embeddingToPgvectorStr(embedding);
+
+          await client.query("SET LOCAL hnsw.ef_search = 150");
+
+          const denseRes = await client.query(
+            denseSql,
+            [embStr, ...params, TOPK_DENSE]
+          );
+          const lexRes = await client.query(
+            lexSql,
+            [q, ...params, TOPK_LEX]
+          );
+
+          fused = rrfFuse({
+            denseRows: denseRes.rows,
+            lexRows: lexRes.rows,
+            k: RRF_K,
+          });
+          break;
+        }
+      }
+
       await client.query("COMMIT");
 
-      const researchItemIds = rows.map((r) => r.id);
+      // take top_k
+      const final = fused.slice(0, top_k);
+
+      const researchItemIds = final.map((r) => r.id);
       const authorsByResearchItem = await getAuthorsByResearchItemIds(
         pool,
         researchItemIds
@@ -359,9 +516,12 @@ app.post("/api/search", async (req, res) => {
         pool,
         researchItemIds
       );
-      const verifiedByResearchItem = await getVerifiedByResearchItemIds(pool, researchItemIds);
+      const verifiedByResearchItem = await getVerifiedByResearchItemIds(
+        pool,
+        researchItemIds
+      );
 
-      const results = rows.map((row) => {
+      const results = final.map((row) => {
         const data = cleanItem(row.data);
         return {
           id: row.id,
@@ -375,13 +535,20 @@ app.post("/api/search", async (req, res) => {
           scopus_id: data.scopusId || data.scopus_id,
           doi: data.doi,
           text: data,
-          score: Number(row.score),
+
+          // detailed scores and ranks
+          dense_rank: row.dense_rank ?? null,
+          lex_rank: row.lex_rank ?? null,
+          dense_score: row.dense_score ?? null,
+          lex_score: row.lex_score ?? null,
         };
       });
 
-      return res.json({ results });
+      return res.json({ results, mode: MODE });
     } catch (err) {
-      try { await client.query("ROLLBACK"); } catch (_) { }
+      try {
+        await client.query("ROLLBACK");
+      } catch (_) {}
       throw err;
     } finally {
       client.release();
@@ -391,6 +558,7 @@ app.post("/api/search", async (req, res) => {
     res.status(500).json({ error: "internal error" });
   }
 });
+
 
 
 
