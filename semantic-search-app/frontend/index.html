@@ -27,6 +27,22 @@
             placeholder="Try queries like 'machine learning in healthcare', 'quantum computing applications'..." />
           <button type="submit">Search</button>
         </form>
+        <div class="search-controls">
+          <div class="top-k-control">
+            <label for="top-k">Results: </label>
+            <select id="top-k">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+          <div class="search-mode-control">
+            <label>Search mode: </label>
+            <label><input type="radio" name="search-mode" value="hybrid" checked /> Hybrid</label>
+            <label><input type="radio" name="search-mode" value="specter2" /> Specter2</label>
+            <label><input type="radio" name="search-mode" value="bm25" /> BM25</label>
+          </div>
+        </div>
         <div class="filters">
           <div>
             <input type="text" id="filter-year" placeholder="Year (e.g. 2015)" />
@@ -40,7 +56,7 @@
             <input type="text" id="filter-source-title" placeholder="Source title (e.g. Biomolecules)" />
             <input type="text" id="filter-source-type" placeholder="Source type (e.g. journal)" />
           </div>
-        </div> 
+        </div>
         <button type="button" id="clear-filters">Clear</button>
 
         <section id="results"></section>

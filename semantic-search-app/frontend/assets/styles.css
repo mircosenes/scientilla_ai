@@ -75,6 +75,37 @@ button:hover {
   margin-top: 1.5625rem;
 }
 
+.search-controls{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.top-k-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.top-k-control label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.top-k-control select {
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+}
+
+.search-mode-control label {
+   font-weight: 600;
+   font-size: 0.9rem;
+}
+
+
+
 .result-item {
   background: #ffffff;
   padding: 1.125rem 1.375rem;

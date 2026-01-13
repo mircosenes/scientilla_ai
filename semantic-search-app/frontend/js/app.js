@@ -22,6 +22,17 @@ clearFiltersBtn.addEventListener("click", () => {
 // const API_BASE = "http://localhost:8000/api";
 const API_BASE = "http://localhost:3000/api";
 
+function getSearchMode() {
+  const el = document.querySelector('input[name="search-mode"]:checked');
+  return el ? el.value : "hybrid";
+}
+
+function getTopK() {
+  const el = document.getElementById("top-k");
+  const v = parseInt(el?.value, 10);
+  return Number.isFinite(v) && v > 0 ? v : 10;
+}
+
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -40,13 +51,17 @@ form.addEventListener("submit", async (e) => {
   const type = typeInput.value.trim();
   const category = categoryInput.value.trim();
 
+  const mode = getSearchMode();
+  const top_k = getTopK();
+
   try {
     const response = await fetch(`${API_BASE}/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query,
-        top_k: 10,
+        top_k,
+        mode,
         filters: {
           year: year || undefined,
           author: author || undefined,
