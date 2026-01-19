@@ -72,11 +72,17 @@ button:hover {
 }
 
 #results {
-  margin-top: 1.5625rem;
+  margin-top: 0.7rem;
+}
+
+#search-form{
+  margin: 0;
+  padding: 0;
 }
 
 .search-controls{
   display: grid;
+  padding: 0;
   grid-template-columns: 1fr 1fr;
   justify-content: space-between;
   margin-bottom: 1rem;
@@ -299,6 +305,17 @@ button:hover {
   top: 1.25rem;
 }
 
+.similarity-box p {
+  display: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1rem;
+  margin-left: 1rem;
+  font-weight: 550;
+  border-bottom: 1px solid #e3e6e9;
+  padding-bottom: 0.5rem;
+}
+
 #similar-items {
   overflow-y: auto;
   max-height: 80vh;
@@ -312,32 +329,178 @@ button:hover {
   border-radius: 3px;
 }
 
-
-.filters {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 2rem;
-  margin: 0.6rem 0;
-  padding: 1rem;
-  margin-right: 3rem;
-  flex-wrap: wrap;
-  border: 1px solid #e7e7e7;
-  border-radius: 0.875rem;
-  background: #fafafa;
+.form-buttons {
+  display: none;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
-.filters input {
-  margin: 0.5rem 0;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid #cacaca;
-  border-radius: 0.625rem;
-  background: #fff;
+.form-buttons-text {
+  font-size: 1rem;
+  color: #1d3557;
+  align-self: center;
 }
 
-#clear-filters {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #cacaca;
-  border-radius: 0.625rem;
-  background: #fff;
+.feedback-btn {
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
+}
+
+.good-btn {
+  color: #007a33;
+}
+
+.bad-btn {
+  color: #7a0000;
+}
+
+.feedback-btn:hover {
+  background: none;
+  border: none;
+  color: black;
+  transform: scale(1.1);
+}
+
+.feedback-btn.good-btn.active {
+  background: rgba(0, 122, 51, 0.15);
+}
+
+.feedback-btn.bad-btn.active {
+  background: rgba(122, 0, 0, 0.15);
+}
+
+
+.result-feedback {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.found-btn {
+  background: rgba(0, 122, 51, 0.06);
+  border: none;
+  border-radius: 999px;
+  color: #007a33;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  margin-top: -3rem;
+}
+
+.found-btn:hover {
+  background: rgba(0, 122, 51, 0.12);
+  border-color: #007a33;
+  box-shadow: 0 2px 6px rgba(0, 122, 51, 0.25);
+  transform: translateY(-1px);
+  color: #007a33;
+}
+
+.found-btn.active {
+  background: rgba(0, 122, 51, 0.25);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+  transform: translateY(0);
+}
+
+
+.found-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 122, 51, 0.4);
+  color: #007a33;
+}
+
+.filters-container {
+  background: #ffffff;
+  border: 1px solid #e3e6e9;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.filters-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.7rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filters-header span {
+  font-weight: 700;
+  color: #1d3557;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#clear-filters-btn {
+  margin-left: auto;
+  background: transparent;
+  color: #666;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  right: 0;
+}
+
+#clear-filters-btn:hover {
+  background: #fff0f0;
+  color: #d00000;
+  border-color: #ffcccc;
+}
+
+.filters-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #457b9d;
+}
+
+.filter-group label i {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.filter-group input, 
+.filter-group select {
+  max-width: 7.5rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #dce1e7;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background-color: #f9fbff;
+}
+
+.small-input{
+  max-width: 5rem;
+}
+
+.filter-group input:focus, 
+.filter-group select:focus {
+  outline: none;
+  border-color: #457b9d;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.1);
+}
+
+.filter-group input::placeholder {
+  color: #adb5bd;
+  font-size: 0.85rem;
 }

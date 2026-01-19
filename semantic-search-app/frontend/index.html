@@ -28,40 +28,72 @@
           <button type="submit">Search</button>
         </form>
         <div class="search-controls">
-          <div class="top-k-control">
-            <label for="top-k">Results: </label>
-            <select id="top-k">
-              <option value="5">5</option>
-              <option value="10" selected>10</option>
-              <option value="20">20</option>
-            </select>
-          </div>
+          <!--
           <div class="search-mode-control">
             <label>Search mode: </label>
             <label><input type="radio" name="search-mode" value="hybrid" checked /> Hybrid</label>
             <label><input type="radio" name="search-mode" value="specter2" /> Specter2</label>
             <label><input type="radio" name="search-mode" value="bm25" /> BM25</label>
           </div>
+          -->
         </div>
-        <div class="filters">
-          <div>
-            <input type="text" id="filter-year" placeholder="Year (e.g. 2015)" />
-            <input type="text" id="filter-author" placeholder="Author name (e.g. Rossi)" />
+        <div class="filters-container">
+          <div class="filters-header">
+            <i class="fa-solid fa-filter"></i>
+            <span>Filter results</span>
+            <button type="button" id="clear-filters-btn">Reset</button>
           </div>
-          <div>
-            <input type="text" id="filter-type" placeholder="Type (e.g. Article)" />
-            <input type="text" id="filter-category" placeholder="Category (e.g. Publication)" />
-          </div>
-          <div>
-            <input type="text" id="filter-source-title" placeholder="Source title (e.g. Biomolecules)" />
-            <input type="text" id="filter-source-type" placeholder="Source type (e.g. journal)" />
+
+          <div class="filters-grid" >
+            <div class="filter-group">
+              <label for="top-k"><i class="fa-solid fa-list-ol"></i> Results </label>
+              <select id="top-k">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+
+            <div class="filter-group small-input">
+              <label for="filter-year"><i class="fa-solid fa-calendar-days"></i> Year</label>
+              <input type="text" id="filter-year" placeholder="Es. 2024" />
+            </div>
+
+            <div class="filter-group">
+              <label for="filter-author"><i class="fa-solid fa-user"></i> Author</label>
+              <input type="text" id="filter-author" placeholder="Es. Rossi" />
+            </div>
+
+            <div class="filter-group">
+              <label for="filter-type"><i class="fa-solid fa-file-lines"></i> Type</label>
+              <input type="text" id="filter-type" placeholder="Es. Article" />
+            </div>
+
+            <div class="filter-group">
+              <label for="filter-source-title"><i class="fa-solid fa-book"></i> Source Title</label>
+              <input type="text" id="filter-source-title" placeholder="Es. Nature" />
+            </div>
+
+            <div class="filter-group">
+              <label for="filter-source-type"><i class="fa-solid fa-tags"></i> Source Type</label>
+              <input type="text" id="filter-source-type" placeholder="Es. Journal" />
+            </div>
           </div>
         </div>
-        <button type="button" id="clear-filters">Clear</button>
+        <div class="form-buttons">
+          <div class="form-buttons-text">Did you find what you were looking for?</div>
+          <button type="button" class="feedback-btn good-btn">
+            <i class="fa-solid fa-thumbs-up"></i>
+          </button>
+          <button type="button" class="feedback-btn bad-btn">
+            <i class="fa-solid fa-thumbs-down"></i>
+          </button>
+        </div>
 
         <section id="results"></section>
       </div>
       <div class="similarity-box">
+        <p>Similar Items found:</p>
         <section id="similar-items"></section>
       </div>
     </div>

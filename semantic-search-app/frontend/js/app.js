@@ -7,20 +7,20 @@ const authorInput = document.getElementById("filter-author");
 const sourceTitleInput = document.getElementById("filter-source-title");
 const sourceTypeInput = document.getElementById("filter-source-type");
 const typeInput = document.getElementById("filter-type");
-const categoryInput = document.getElementById("filter-category");
+const clearFiltersBtn = document.getElementById("clear-filters-btn");
+const formButtons = document.querySelector(".form-buttons");
 
-const clearFiltersBtn = document.getElementById("clear-filters");
+// const API_BASE = "http://localhost:8000/api";
+const API_BASE = "http://localhost:3000/api";
+
 clearFiltersBtn.addEventListener("click", () => {
   yearInput.value = "";
   authorInput.value = "";
   sourceTitleInput.value = "";
   sourceTypeInput.value = "";
   typeInput.value = "";
-  categoryInput.value = "";
+  topKSelect.value = "10";
 });
-
-// const API_BASE = "http://localhost:8000/api";
-const API_BASE = "http://localhost:3000/api";
 
 function getSearchMode() {
   const el = document.querySelector('input[name="search-mode"]:checked');
@@ -49,7 +49,6 @@ form.addEventListener("submit", async (e) => {
   const source_title = sourceTitleInput.value.trim();
   const source_type = sourceTypeInput.value.trim();
   const type = typeInput.value.trim();
-  const category = categoryInput.value.trim();
 
   const mode = getSearchMode();
   const top_k = getTopK();
@@ -68,7 +67,6 @@ form.addEventListener("submit", async (e) => {
           source_title: source_title || undefined,
           source_type: source_type || undefined,
           type: type || undefined,
-          category: category || undefined
         },
       }),
     });
@@ -79,6 +77,8 @@ form.addEventListener("submit", async (e) => {
     }
 
     const data = await response.json();
+    const formButtons = document.querySelector(".form-buttons");
+    formButtons.style.display = "flex";
     renderResults(data.results || []);
   } catch (err) {
     console.error(err);
@@ -117,7 +117,7 @@ function buildVerifiedEntitiesHtml(r) {
   `;
 }
 
-function buildItemHtml(r) {
+function buildItemHtml(r, { showFeedback = true } = {}) {
   const authorsHtml = (r.authors || [])
     .map((a) => {
       const nameHtml = escapeHtml(a.name);
@@ -156,6 +156,15 @@ function buildItemHtml(r) {
     </div>`
     : "";
 
+    const feedbackHtml = showFeedback
+    ? `
+      <div class="result-feedback">
+        <button type="button" class="found-btn" data-event="success">
+          <i class="fa-solid fa-thumbs-up"></i>
+        </button>
+      </div>`
+    : "";
+
   return `
     <div class="result-item" data-id="${r.id}">
       <div class="result-header">
@@ -189,6 +198,7 @@ function buildItemHtml(r) {
 
       ${doiHtml}
       ${scopusHtml}
+      ${feedbackHtml}
     </div>
   `;
 }
@@ -211,6 +221,8 @@ function renderResults(results) {
         el.classList.remove("selected");
         items.forEach((it) => it.classList.remove("blurred"));
         similarItemsContainer.innerHTML = "";
+        const simBoxTitle = document.querySelector(".similarity-box p");
+        simBoxTitle.style.display = "none";
         return;
       }
 
@@ -249,13 +261,16 @@ async function loadSimilar(id) {
 }
 
 function renderSimilarItems(results) {
+  const simBoxTitle = document.querySelector(".similarity-box p");
+  simBoxTitle.style.display = results.length ? "block" : "none";
+
   if (!results.length) {
     similarItemsContainer.innerHTML = "<p>No similar items.</p>";
     return;
   }
 
   similarItemsContainer.innerHTML = results
-    .map((r) => buildItemHtml(r, { scoreLabel: "similarity score" }))
+    .map((r) => buildItemHtml(r, { scoreLabel: "similarity score", showFeedback: false }))
     .join("");
 }
 
@@ -265,3 +280,51 @@ function escapeHtml(text) {
   div.innerText = text == null ? "" : text;
   return div.innerHTML;
 }
+
+resultsContainer.addEventListener(
+  "click",
+  (e) => {
+    const btn = e.target.closest(".found-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    // toggle button state
+    btn.classList.add("active");
+    const item = btn.closest(".result-item");
+    const id = item?.dataset?.id;
+    const isActive = btn.classList.contains("active");
+
+    // TODO send feedback to backend
+  },
+  true
+);
+
+formButtons.addEventListener(
+  "click",
+  (e) => {
+    const btn = e.target.closest(".feedback-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    // toggle button state
+    formButtons
+      .querySelectorAll(".feedback-btn")
+      .forEach((b) => b.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    const value = btn.classList.contains("good-btn") ? "good" : "bad";
+
+    // disable buttons after feedback
+    formButtons
+      .querySelectorAll(".feedback-btn")
+      .forEach((b) => (b.disabled = true));
+
+    // TODO: send feedback to backend
+  },
+  true
+);
