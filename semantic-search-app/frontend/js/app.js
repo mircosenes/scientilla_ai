@@ -156,13 +156,37 @@ function buildItemHtml(r, { showFeedback = true } = {}) {
     </div>`
     : "";
 
-    const feedbackHtml = showFeedback
+  const feedbackHtml = showFeedback
     ? `
-      <div class="result-feedback">
-        <button type="button" class="found-btn" data-event="success">
-          <i class="fa-solid fa-thumbs-up"></i>
-        </button>
-      </div>`
+    <div>
+      <div>
+        <div class="result-feedback" data-feedback>
+        <div class="result-feedback-tellus">
+          <button type="button" class="tell-us-why" data-action="toggle-why" aria-expanded="false">
+            Tell us why?
+          </button>
+        </div>
+          <button type="button" class="thumb-btn not-relevant-btn" data-event="failure">
+            <i class="fa-solid fa-thumbs-down"></i> Not Relevant
+          </button>
+          <button type="button" class="thumb-btn relevant-btn" data-event="success">
+            <i class="fa-solid fa-thumbs-up"></i> Relevant
+          </button>
+        </div>
+      </div>
+
+      <div class="why-panel" data-why-panel>
+        <div class="why-head">
+          <div class="why-title">What did not work?</div>
+          <button type="button" class="why-close" aria-label="Close">x</button>
+        </div>
+        <label class="why-option"><input type="checkbox" value="wrong_topic" /> Wrong topic</label>
+        <label class="why-option"><input type="checkbox" value="too_generic" /> Too generic based on my search</label>
+        <label class="why-option"><input type="checkbox" value="different_context" /> Different context / application</label>
+        <label class="why-option"><input type="checkbox" value="other" /> Other</label>
+      </div>
+    </div>
+    `
     : "";
 
   return `
@@ -281,50 +305,215 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Feedback event delegation
 resultsContainer.addEventListener(
   "click",
   (e) => {
-    const btn = e.target.closest(".found-btn");
-    if (!btn) return;
-
+    const inFeedbackArea = e.target.closest("[data-feedback], .result-feedback-tellus, [data-why-panel]");
+  if (inFeedbackArea) {
     e.preventDefault();
     e.stopImmediatePropagation();
+  }
+    const closeBtn = e.target.closest(".why-close");
+    if (closeBtn) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
 
-    // toggle button state
-    btn.classList.add("active");
-    const item = btn.closest(".result-item");
-    const id = item?.dataset?.id;
-    const isActive = btn.classList.contains("active");
+      const item = closeBtn.closest(".result-item");
+      const panel = item?.querySelector("[data-why-panel]");
+      const tell = item?.querySelector(".tell-us-why");
 
-    // TODO send feedback to backend
+      panel?.classList.remove("open");
+      tell?.setAttribute("aria-expanded", "false");
+      return;
+    }
+
+    const thumb = e.target.closest(".thumb-btn");
+    if (thumb) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const item = thumb.closest(".result-item");
+      if (!item) return;
+
+      const feedbackBox = item.querySelector("[data-feedback]");
+      const notBtn = feedbackBox?.querySelector(".not-relevant-btn");
+      const relBtn = feedbackBox?.querySelector(".relevant-btn");
+      const tell = item.querySelector(".tell-us-why");
+      const panel = item.querySelector("[data-why-panel]"); // FIX: non dentro feedbackBox
+
+      const isFailureBtn = thumb.classList.contains("not-relevant-btn");
+      const wasActive = thumb.classList.contains("active");
+
+      const clearWhy = () => {
+        if (panel) {
+          panel.classList.remove("open");
+          panel
+            .querySelectorAll('input[type="checkbox"]')
+            .forEach((cb) => (cb.checked = false));
+        }
+        if (tell) {
+          tell.classList.remove("visible");
+          tell.setAttribute("aria-expanded", "false");
+        }
+        delete item.dataset.itemReasons;
+      };
+
+      if (wasActive) {
+        thumb.classList.remove("active");
+        delete item.dataset.itemFeedback;
+        clearWhy();
+        return;
+      }
+
+      notBtn?.classList.remove("active");
+      relBtn?.classList.remove("active");
+
+      thumb.classList.add("active");
+      item.dataset.itemFeedback = isFailureBtn ? "bad" : "good";
+
+      if (isFailureBtn) {
+        if (tell) tell.classList.add("visible");
+        if (panel) panel.classList.remove("open");
+        if (tell) tell.setAttribute("aria-expanded", "false");
+      } else {
+        clearWhy();
+      }
+
+      // TODO backend
+
+      return;
+    }
+
+    const tellBtn = e.target.closest(".tell-us-why");
+    if (tellBtn) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const item = tellBtn.closest(".result-item");
+      const panel = item?.querySelector("[data-why-panel]");
+      if (!panel) return;
+
+      const willOpen = !panel.classList.contains("open");
+      panel.classList.toggle("open", willOpen);
+      tellBtn.setAttribute("aria-expanded", String(willOpen));
+
+      return;
+    }
+
+    const whyCheckbox = e.target.closest('[data-why-panel] input[type="checkbox"]');
+    if (whyCheckbox) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const item = whyCheckbox.closest(".result-item");
+      const panel = whyCheckbox.closest("[data-why-panel]");
+      const selected = Array.from(panel.querySelectorAll('input[type="checkbox"]:checked'))
+        .map((cb) => cb.value);
+
+      item.dataset.itemReasons = selected.join(",");
+
+      // TODO backend
+
+      return;
+    }
   },
   true
 );
 
-formButtons.addEventListener(
-  "click",
-  (e) => {
-    const btn = e.target.closest(".feedback-btn");
-    if (!btn) return;
+// Global feedback box
+(function setupGlobalFeedback() {
+  const box = document.getElementById("global-feedback");
+  if (!box) return;
 
+  const yesBtn = box.querySelector('[data-global="yes"]');
+  const noBtn = box.querySelector('[data-global="no"]');
+  const tellBtn = box.querySelector(".global-tell");
+  const panel = box.querySelector("#global-why-panel");
+  const closeBtn = box.querySelector("#global-why-panel .why-close");
+
+  const clearWhy = () => {
+    panel?.classList.remove("open");
+    tellBtn?.setAttribute("aria-expanded", "false");
+    panel
+      ?.querySelectorAll('input[type="checkbox"]')
+      .forEach((cb) => (cb.checked = false));
+    delete box.dataset.globalReasons;
+  };
+
+  const hideTell = () => {
+    tellBtn?.classList.remove("visible");
+    clearWhy();
+  };
+
+  const showTell = () => {
+    tellBtn?.classList.add("visible");
+    panel?.classList.remove("open");
+    tellBtn?.setAttribute("aria-expanded", "false");
+  };
+
+  closeBtn?.addEventListener("click", (e) => {
     e.preventDefault();
-    e.stopImmediatePropagation();
+    e.stopPropagation();
+    panel?.classList.remove("open");
+    tellBtn?.setAttribute("aria-expanded", "false");
+  });
 
-    // toggle button state
-    formButtons
-      .querySelectorAll(".feedback-btn")
-      .forEach((b) => b.classList.remove("active"));
+  const onThumb = (btn, value) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
+    const wasActive = btn.classList.contains("active");
+
+    if (wasActive) {
+      btn.classList.remove("active");
+      delete box.dataset.globalFeedback;
+      hideTell();
+      return;
+    }
+
+    yesBtn?.classList.remove("active");
+    noBtn?.classList.remove("active");
     btn.classList.add("active");
 
-    const value = btn.classList.contains("good-btn") ? "good" : "bad";
+    box.dataset.globalFeedback = value;
 
-    // disable buttons after feedback
-    formButtons
-      .querySelectorAll(".feedback-btn")
-      .forEach((b) => (b.disabled = true));
+    if (value === "no") {
+      showTell();
+    } else {
+      hideTell();
+    }
 
-    // TODO: send feedback to backend
-  },
-  true
-);
+    // TODO backend
+  };
+
+  yesBtn?.addEventListener("click", onThumb(yesBtn, "yes"));
+  noBtn?.addEventListener("click", onThumb(noBtn, "no"));
+
+  tellBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!noBtn?.classList.contains("active")) return;
+
+    const willOpen = !panel.classList.contains("open");
+    panel.classList.toggle("open", willOpen);
+    tellBtn.setAttribute("aria-expanded", String(willOpen));
+  });
+
+  panel?.addEventListener("click", (e) => {
+    const cb = e.target.closest('input[type="checkbox"]');
+    if (!cb) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const selected = Array.from(panel.querySelectorAll('input[type="checkbox"]:checked'))
+      .map((x) => x.value);
+
+    box.dataset.globalReasons = selected.join(",");
+
+    // TODO backend (optional)
+  });
+
+})();

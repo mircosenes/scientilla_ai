@@ -16,7 +16,9 @@
 
     <p class="description">
       <strong>Search</strong> through Scientilla's research database using natural language queries and
-      <strong>click</strong> on results to find similar items.
+      click on results to find <strong>similar items</strong>.<br>
+      You can also provide <strong>feedback</strong> on individual results and on the search overall to help us
+      evaluate the quality of the search.<br>
     </p>
 
     <div class="main-box">
@@ -44,7 +46,7 @@
             <button type="button" id="clear-filters-btn">Reset</button>
           </div>
 
-          <div class="filters-grid" >
+          <div class="filters-grid">
             <div class="filter-group">
               <label for="top-k"><i class="fa-solid fa-list-ol"></i> Results </label>
               <select id="top-k">
@@ -80,24 +82,49 @@
             </div>
           </div>
         </div>
-        <div class="form-buttons">
-          <div class="form-buttons-text">Did you find what you were looking for?</div>
-          <button type="button" class="feedback-btn good-btn">
-            <i class="fa-solid fa-thumbs-up"></i>
-          </button>
-          <button type="button" class="feedback-btn bad-btn">
-            <i class="fa-solid fa-thumbs-down"></i>
-          </button>
+
+        <div id="global-feedback">
+          <div class="form-buttons">
+            <div class="form-buttons-text">Did you find what you were looking for?</div>
+
+            <button type="button" class="thumb-btn relevant-btn" data-global="yes">
+              <i class="fa-solid fa-thumbs-up"></i> Yes
+            </button>
+
+            <button type="button" class="thumb-btn not-relevant-btn" data-global="no">
+              <i class="fa-solid fa-thumbs-down"></i> No
+            </button>
+
+            <button type="button" class="tell-us-why global-tell" aria-expanded="false">
+              Tell us why?
+            </button>
+          </div>
+
+
+          <div class="why-panel global-why" id="global-why-panel">
+            <div class="why-head">
+              <div class="why-title">What did not work with the search?</div>
+              <button type="button" class="why-close" aria-label="Close">x</button>
+            </div>
+
+            <label class="why-option"><input type="checkbox" value="no_relevant_results" /> No relevant results</label>
+            <label class="why-option"><input type="checkbox" value="too_vague" /> Results too vague</label>
+            <label class="why-option"><input type="checkbox" value="missing_important" /> Missing important
+              documents</label>
+            <label class="why-option"><input type="checkbox" value="ranking_wrong" /> Ranking wrong</label>
+            <label class="why-option"><input type="checkbox" value="other" /> Other</label>
+          </div>
         </div>
 
         <section id="results"></section>
+
+
       </div>
       <div class="similarity-box">
         <p>Similar Items found:</p>
         <section id="similar-items"></section>
       </div>
     </div>
-
 
   </main>
 
