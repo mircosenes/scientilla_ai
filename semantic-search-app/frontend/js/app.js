@@ -12,6 +12,7 @@ const authorInput = $("#filter-author");
 const sourceTitleInput = $("#filter-source-title");
 const sourceTypeInput = $("#filter-source-type");
 const typeInput = $("#filter-type");
+const keywordInput = $("#filter-keyword");
 const clearFiltersBtn = $("#clear-filters-btn");
 
 const API_BASE = "http://localhost:3000/api";
@@ -60,8 +61,10 @@ function getFilters() {
     source_title: sourceTitleInput.value.trim() || undefined,
     source_type: sourceTypeInput.value.trim() || undefined,
     type: typeInput.value.trim() || undefined,
+    keyword: keywordInput?.value?.trim() || undefined,
   };
 }
+
 
 clearFiltersBtn?.addEventListener("click", () => {
   yearInput.value = "";
@@ -69,9 +72,12 @@ clearFiltersBtn?.addEventListener("click", () => {
   sourceTitleInput.value = "";
   sourceTypeInput.value = "";
   typeInput.value = "";
+  if (keywordInput) keywordInput.value = "";
+
   const topK = $("#top-k");
   if (topK) topK.value = "10";
 });
+
 
 function resetGlobalUI() {
   const box = $("#global-feedback");

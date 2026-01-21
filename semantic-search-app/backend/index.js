@@ -272,16 +272,16 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
     i++;
   }
 
-  // category
-  if (has(filters.category)) {
-    where.push(`(rit.type::text ILIKE $${i} OR rit.type_label::text ILIKE $${i})`);
-    params.push(`%${String(filters.category).trim()}%`);
+  // keyword
+    if (has(filters.keyword)) {
+    where.push(`(ri.fts @@ websearch_to_tsquery('english', $${i}))`);
+    params.push(String(filters.keyword).trim());
     i++;
   }
 
-
   const clause = where.length ? ` AND ${where.join(" AND ")}` : "";
   return { clause, params, nextParamIndex: i };
+  
 }
 
 function rrfFuse({ denseRows, lexRows, k = 60 }) {
