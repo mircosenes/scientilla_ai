@@ -544,11 +544,41 @@ app.post("/api/search", async (req, res) => {
         };
       });
 
-      return res.json({ results, mode: MODE });
+      function getUserId(req) {
+        return String(req.headers["x-user-id"] || "").trim() || "anonymous";
+      }
+
+      const user_id = getUserId(req);
+
+      const filtersJson = filters || {};
+      const resultsJson = results.map((r, idx) => ({
+        id: r.id,
+        rank: idx + 1,
+        year: r.year ?? null,
+        title: r.title ?? null,
+        dense_score: r.dense_score ?? null,
+        dense_rank: r.dense_rank ?? null,
+        lex_score: r.lex_score ?? null,
+        lex_rank: r.lex_rank ?? null,
+      }));
+
+      const ins = await pool.query(
+        `
+  INSERT INTO search_feedback (user_id, query, filters, results)
+  VALUES ($1, $2, $3::jsonb, $4::jsonb)
+  RETURNING id
+  `,
+        [user_id, q, JSON.stringify(filtersJson), JSON.stringify(resultsJson)]
+      );
+
+      const feedback_id = ins.rows[0].id;
+
+      return res.json({ results, mode: MODE, feedback_id });
+
     } catch (err) {
       try {
         await client.query("ROLLBACK");
-      } catch (_) {}
+      } catch (_) { }
       throw err;
     } finally {
       client.release();
@@ -632,3 +662,148 @@ app.listen(PORT, () => {
   console.log(`Semantic search backend listening on http://localhost:${PORT}`);
 });
 
+function mergeItemFeedback(current, itemUpdate) {
+  // current: array [{id,label,reason?}]
+  // itemUpdate: {id,label,reason?} with label possibly null (clear)
+  const arr = Array.isArray(current) ? current : [];
+  const id = String(itemUpdate.id);
+
+  // remove any existing entry with same id
+  const filtered = arr.filter((x) => String(x.id) !== id);
+
+  // if clearing, don't re-add
+  if (itemUpdate.label === null || itemUpdate.label === undefined) {
+    return filtered;
+  }
+
+  const entry = { id, label: Number(itemUpdate.label) };
+  if (entry.label === 0 && itemUpdate.reason) entry.reason = String(itemUpdate.reason);
+
+  return [...filtered, entry];
+}
+
+app.post("/api/feedback", async (req, res) => {
+  const body = req.body || {};
+  const user_id = String(body.user_id || req.headers["x-user-id"] || "").trim() || "anonymous";
+
+  const feedback_id = body.feedback_id != null ? Number(body.feedback_id) : null;
+
+  const global_feedback =
+    body.global_feedback === null || body.global_feedback === undefined
+      ? null
+      : Number(body.global_feedback);
+
+  if (global_feedback !== null && global_feedback !== 0 && global_feedback !== 1) {
+    return res.status(400).json({ error: "global_feedback must be 0|1|null" });
+  }
+
+  const global_reason = body.global_reason == null ? null : String(body.global_reason);
+
+  const item = body.item || null; // {id,label,reason?}
+  if (item) {
+    const lbl = item.label === null || item.label === undefined ? null : Number(item.label);
+    if (lbl !== null && lbl !== 0 && lbl !== 1) {
+      return res.status(400).json({ error: "item.label must be 0|1|null" });
+    }
+    if (item.reason != null && typeof item.reason !== "string") {
+      return res.status(400).json({ error: "item.reason must be string" });
+    }
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let row;
+
+    // find existing row
+    if (feedback_id) {
+      const r = await client.query(
+        `SELECT * FROM search_feedback WHERE id = $1`,
+        [feedback_id]
+      );
+      row = r.rows[0] || null;
+    }
+
+    // if not found, create a row (fallback)
+    if (!row) {
+      const q = String(body.query || "").trim();
+      if (!q) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "missing query (needed to create row if feedback_id not found)" });
+      }
+
+      const filtersJson = body.filters || {};
+      const resultsJson = body.results || [];
+
+      const ins = await client.query(
+        `
+        INSERT INTO search_feedback (user_id, query, filters, results)
+        VALUES ($1, $2, $3::jsonb, $4::jsonb)
+        RETURNING *
+        `,
+        [user_id, q, JSON.stringify(filtersJson), JSON.stringify(resultsJson)]
+      );
+      row = ins.rows[0];
+    }
+
+    // apply updates
+    const updates = [];
+    const params = [];
+    let pi = 1;
+
+    // global fields: if provided in request, update them
+    if (body.hasOwnProperty("global_feedback")) {
+      updates.push(`global_feedback = $${pi++}`);
+      params.push(global_feedback);
+
+      // if global_feedback is 1 -> clear global_reason
+      if (global_feedback === 1) {
+        updates.push(`global_reason = NULL`);
+      } else if (body.hasOwnProperty("global_reason")) {
+        updates.push(`global_reason = $${pi++}`);
+        params.push(global_reason);
+      }
+    } else if (body.hasOwnProperty("global_reason")) {
+      updates.push(`global_reason = $${pi++}`);
+      params.push(global_reason);
+    }
+
+    // item feedback update
+    if (item) {
+      const current = row.item_feedback;
+      const next = mergeItemFeedback(current, {
+        id: item.id,
+        label: item.label === null || item.label === undefined ? null : Number(item.label),
+        reason: item.reason ?? null,
+      });
+
+      updates.push(`item_feedback = $${pi++}::jsonb`);
+      params.push(JSON.stringify(next));
+    }
+
+    if (updates.length) {
+      params.push(row.id);
+      const upd = await client.query(
+        `
+        UPDATE search_feedback
+        SET ${updates.join(", ")}
+        WHERE id = $${pi}
+        RETURNING id, user_id, global_feedback, global_reason, item_feedback, updated_at
+        `,
+        params
+      );
+      await client.query("COMMIT");
+      return res.json({ ok: true, feedback_id: upd.rows[0].id, row: upd.rows[0] });
+    }
+
+    await client.query("COMMIT");
+    return res.json({ ok: true, feedback_id: row.id, row: { id: row.id } });
+  } catch (err) {
+    try { await client.query("ROLLBACK"); } catch (_) {}
+    console.error("Error in /api/feedback:", err);
+    return res.status(500).json({ error: "internal error" });
+  } finally {
+    client.release();
+  }
+});

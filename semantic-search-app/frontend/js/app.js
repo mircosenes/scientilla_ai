@@ -1,209 +1,155 @@
-const form = document.getElementById("search-form");
-const resultsContainer = document.getElementById("results");
-const similarItemsContainer = document.getElementById("similar-items");
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-const yearInput = document.getElementById("filter-year");
-const authorInput = document.getElementById("filter-author");
-const sourceTitleInput = document.getElementById("filter-source-title");
-const sourceTypeInput = document.getElementById("filter-source-type");
-const typeInput = document.getElementById("filter-type");
-const clearFiltersBtn = document.getElementById("clear-filters-btn");
-const formButtons = document.querySelector(".form-buttons");
+const form = $("#search-form");
+const resultsContainer = $("#results");
+const similarItemsContainer = $("#similar-items");
+const helpBox = $("#instructions-help")
 
-// const API_BASE = "http://localhost:8000/api";
+
+const yearInput = $("#filter-year");
+const authorInput = $("#filter-author");
+const sourceTitleInput = $("#filter-source-title");
+const sourceTypeInput = $("#filter-source-type");
+const typeInput = $("#filter-type");
+const clearFiltersBtn = $("#clear-filters-btn");
+
 const API_BASE = "http://localhost:3000/api";
 
-clearFiltersBtn.addEventListener("click", () => {
+let currentFeedbackId = null;
+
+function getOrCreateUserId() {
+  let id = localStorage.getItem("scientilla_user_id");
+  if (!id) {
+    id = crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem("scientilla_user_id", id);
+  }
+  return id;
+}
+const USER_ID = getOrCreateUserId();
+
+async function postFeedback(payload) {
+  if (!currentFeedbackId) return;
+  try {
+    const r = await fetch(`${API_BASE}/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-user-id": USER_ID },
+      body: JSON.stringify({ feedback_id: currentFeedbackId, ...payload }),
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data?.feedback_id) currentFeedbackId = data.feedback_id;
+  } catch (_) { }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.innerText = text == null ? "" : text;
+  return div.innerHTML;
+}
+
+function getTopK() {
+  const v = parseInt($("#top-k")?.value, 10);
+  return Number.isFinite(v) && v > 0 ? v : 10;
+}
+
+function getFilters() {
+  return {
+    year: yearInput.value.trim() || undefined,
+    author: authorInput.value.trim() || undefined,
+    source_title: sourceTitleInput.value.trim() || undefined,
+    source_type: sourceTypeInput.value.trim() || undefined,
+    type: typeInput.value.trim() || undefined,
+  };
+}
+
+clearFiltersBtn?.addEventListener("click", () => {
   yearInput.value = "";
   authorInput.value = "";
   sourceTitleInput.value = "";
   sourceTypeInput.value = "";
   typeInput.value = "";
-  topKSelect.value = "10";
+  const topK = $("#top-k");
+  if (topK) topK.value = "10";
 });
 
-function getSearchMode() {
-  const el = document.querySelector('input[name="search-mode"]:checked');
-  return el ? el.value : "hybrid";
-}
+function resetGlobalUI() {
+  const box = $("#global-feedback");
+  if (!box) return;
 
-function getTopK() {
-  const el = document.getElementById("top-k");
-  const v = parseInt(el?.value, 10);
-  return Number.isFinite(v) && v > 0 ? v : 10;
-}
+  $$(".thumb-btn", box).forEach((b) => b.classList.remove("active"));
+  const tell = $(".global-tell", box);
+  const panel = $("#global-why-panel", box);
 
+  tell?.classList.remove("visible");
+  tell?.setAttribute("aria-expanded", "false");
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const queryInput = document.getElementById("query");
-  const query = queryInput.value.trim();
-  if (!query) return;
+  panel?.classList.remove("open");
+  $$('input[type="checkbox"]', panel).forEach((cb) => (cb.checked = false));
 
-  resultsContainer.innerHTML = "<p>Searching...</p>";
-  similarItemsContainer.innerHTML = ""; // clear similar items
-
-  // filters
-  const year = yearInput.value.trim();
-  const author = authorInput.value.trim();
-  const source_title = sourceTitleInput.value.trim();
-  const source_type = sourceTypeInput.value.trim();
-  const type = typeInput.value.trim();
-
-  const mode = getSearchMode();
-  const top_k = getTopK();
-
-  try {
-    const response = await fetch(`${API_BASE}/search`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query,
-        top_k,
-        mode,
-        filters: {
-          year: year || undefined,
-          author: author || undefined,
-          source_title: source_title || undefined,
-          source_type: source_type || undefined,
-          type: type || undefined,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      resultsContainer.innerHTML = `<p>Error: ${response.status}</p>`;
-      return;
-    }
-
-    const data = await response.json();
-    const formButtons = document.querySelector(".form-buttons");
-    formButtons.style.display = "flex";
-    renderResults(data.results || []);
-  } catch (err) {
-    console.error(err);
-    resultsContainer.innerHTML = "<p>Network Error.</p>";
+  const other = $(".why-other-text", panel);
+  if (other) {
+    other.value = "";
+    other.classList.remove("visible");
   }
-});
 
-function getEntityDisplayName(entity) {
-  const p = entity?.data || {};
-  const name = (p.name || "").trim();
-  const surname = (p.surname || "").trim();
-  return (name + (surname ? ` ${surname}` : "")).trim();
+  delete box.dataset.globalReasons;
 }
 
-function buildVerifiedEntitiesHtml(r) {
-  const verified = Array.isArray(r.verified) ? r.verified : [];
-  const names = verified
-    .map((v) => getEntityDisplayName(v.research_entity))
+function verifiedHtml(r) {
+  const names = (Array.isArray(r.verified) ? r.verified : [])
+    .map((v) => {
+      const p = v?.research_entity?.data || {};
+      const name = (p.name || "").trim();
+      const surname = (p.surname || "").trim();
+      return (name + (surname ? ` ${surname}` : "")).trim();
+    })
     .filter(Boolean);
 
-  if (names.length === 0) return "";
+  const unique = Array.from(new Set(names));
+  if (!unique.length) return "";
 
-  const uniqueNames = Array.from(new Set(names));
-  const listItemsHtml = uniqueNames
-    .map((n) => `<div class="verified-tooltip-item">${escapeHtml(n)}</div>`)
-    .join("");
+  const list = unique.map((n) => `<div class="verified-tooltip-item">${escapeHtml(n)}</div>`).join("");
 
   return `
     <span class="result-pill verified-pill">
-      Verified by ${uniqueNames.length}
+      Verified by ${unique.length}
       <span class="verified-info-icon" aria-hidden="true">ⓘ</span>
-      <div class="verified-tooltip" role="tooltip">
-        ${listItemsHtml}
-      </div>
+      <div class="verified-tooltip" role="tooltip">${list}</div>
     </span>
   `;
 }
 
-function buildItemHtml(r, { showFeedback = true } = {}) {
+function buildItemHtml(r) {
   const authorsHtml = (r.authors || [])
     .map((a) => {
-      const nameHtml = escapeHtml(a.name);
-      return a.verified_id
-        ? `<span class="result-author verified">${nameHtml}</span>`
-        : `<span class="result-author">${nameHtml}</span>`;
+      const n = escapeHtml(a.name);
+      return a.verified_id ? `<span class="result-author verified">${n}</span>` : `<span class="result-author">${n}</span>`;
     })
     .join(", ");
 
-  const verifiedEntitiesHtml = buildVerifiedEntitiesHtml(r);
   const abstractText = escapeHtml(r.abstract);
   const hrHtml = abstractText ? `<hr class="item-hr" />` : "";
 
   const doiHtml = r.doi
-    ? `
-      <div class="result-doi">
-        DOI:
-        <span class="result-doi-link"
-              onclick="window.open('https://doi.org/${escapeHtml(r.doi)}', '_blank')">
-          ${escapeHtml(r.doi)}
-        </span>
-      </div>`
+    ? `<div class="result-doi">DOI: <span class="result-doi-link" onclick="window.open('https://doi.org/${escapeHtml(
+      r.doi
+    )}','_blank')">${escapeHtml(r.doi)}</span></div>`
     : "";
 
   const scopusHtml = r.scopus_id
-    ? `
-    <div class="result-doi">
-      Scopus:
-      <span class="result-doi-link"
-            onclick="window.open(
-              'https://www.scopus.com/record/display.uri?eid=2-s2.0-${escapeHtml(r.scopus_id)}',
-              '_blank'
-            )">
-        ${escapeHtml(r.scopus_id)}
-      </span>
-    </div>`
-    : "";
-
-  const feedbackHtml = showFeedback
-    ? `
-    <div>
-      <div>
-        <div class="result-feedback" data-feedback>
-        <div class="result-feedback-tellus">
-          <button type="button" class="tell-us-why" data-action="toggle-why" aria-expanded="false">
-            Tell us why?
-          </button>
-        </div>
-          <button type="button" class="thumb-btn not-relevant-btn" data-event="failure">
-            <i class="fa-solid fa-thumbs-down"></i> Not Relevant
-          </button>
-          <button type="button" class="thumb-btn relevant-btn" data-event="success">
-            <i class="fa-solid fa-thumbs-up"></i> Relevant
-          </button>
-        </div>
-      </div>
-
-      <div class="why-panel" data-why-panel>
-        <div class="why-head">
-          <div class="why-title">What did not work?</div>
-          <button type="button" class="why-close" aria-label="Close">x</button>
-        </div>
-        <label class="why-option"><input type="checkbox" value="wrong_topic" /> Wrong topic</label>
-        <label class="why-option"><input type="checkbox" value="too_generic" /> Too generic based on my search</label>
-        <label class="why-option"><input type="checkbox" value="different_context" /> Different context / application</label>
-        <label class="why-option"><input type="checkbox" value="other" /> Other</label>
-      </div>
-    </div>
-    `
+    ? `<div class="result-doi">Scopus: <span class="result-doi-link" onclick="window.open('https://www.scopus.com/record/display.uri?eid=2-s2.0-${escapeHtml(
+      r.scopus_id
+    )}','_blank')">${escapeHtml(r.scopus_id)}</span></div>`
     : "";
 
   return `
     <div class="result-item" data-id="${r.id}">
       <div class="result-header">
-        ${r.dense_score != null ? `
-          <div class="result-score">
-              specter2: ${r.dense_score.toFixed(3)}${r.dense_rank ? `, rank: ${r.dense_rank}` : ''}
-          </div>
-      ` : ''}
-        ${r.lex_score != null ? `
-          <div class="result-score">
-              bm25: ${r.lex_score.toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ''}
-          </div>
-        ` : ''}
+        ${r.dense_score != null ? `<div class="result-score">specter2: ${r.dense_score.toFixed(3)}${r.dense_rank ? `, rank: ${r.dense_rank}` : ""}</div>` : ""}
+        ${r.lex_score != null ? `<div class="result-score">bm25: ${r.lex_score.toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ""}</div>` : ""}
         <div class="result-pills">
-          ${verifiedEntitiesHtml}
+          ${verifiedHtml(r)}
           <div class="result-pill">${escapeHtml(r?.type?.label)}</div>
           <div class="result-pill">${escapeHtml(r?.type?.type_label)}</div>
           <div class="result-pill">${escapeHtml(r?.year)}</div>
@@ -215,305 +161,479 @@ function buildItemHtml(r, { showFeedback = true } = {}) {
 
       ${hrHtml}
       <div class="result-abstract">${abstractText}</div>
-      <div class="result-source">  
+
+      <div class="result-source">
         <i class="fa-solid fa-newspaper result-source-icon" aria-hidden="true"></i>
-        <em>${r?.source?.title}</em>
+        <em>${escapeHtml(r?.source?.title)}</em>
       </div>
 
       ${doiHtml}
       ${scopusHtml}
-      ${feedbackHtml}
+
+      <div class="result-feedback" data-feedback>
+        <button type="button" class="tell-us-why" aria-expanded="false" style="margin-bottom: 0.5rem">Tell us why?</button>
+        <button type="button" class="thumb-btn not-relevant-btn"> <i class="fa-solid fa-thumbs-down"></i> Not Relevant</button>
+        <button type="button" class="thumb-btn relevant-btn"> <i class="fa-solid fa-thumbs-up"></i> Relevant</button>
+      </div>
+
+      <div class="why-panel" data-why-panel>
+        <div class="why-head">
+          <div class="why-title">What did not work?</div>
+          <button type="button" class="why-close" aria-label="Close">x</button>
+        </div>
+
+        <label class="why-option"><input type="checkbox" value="wrong_topic" /> Wrong topic</label>
+        <label class="why-option"><input type="checkbox" value="too_generic" /> Too generic based on my search</label>
+        <label class="why-option"><input type="checkbox" value="different_context" /> Different context / application</label>
+        <label class="why-option why-other"><input type="checkbox" value="other" /> Other</label>
+        <textarea class="why-other-text" rows="2" placeholder="Please specify..."></textarea>
+      </div>
     </div>
   `;
 }
 
-
 function renderResults(results) {
-  if (!results.length) {
+  if (!results?.length) {
     resultsContainer.innerHTML = "<p>No results.</p>";
     return;
   }
-
-  resultsContainer.innerHTML = results
-    .map((r) => buildItemHtml(r))
-    .join("");
-
-  const items = resultsContainer.querySelectorAll(".result-item");
-  items.forEach((el) => {
-    el.addEventListener("click", () => {
-      if (el.classList.contains("selected")) {
-        el.classList.remove("selected");
-        items.forEach((it) => it.classList.remove("blurred"));
-        similarItemsContainer.innerHTML = "";
-        const simBoxTitle = document.querySelector(".similarity-box p");
-        simBoxTitle.style.display = "none";
-        return;
-      }
-
-      items.forEach((it) => it.classList.remove("selected"));
-      items.forEach((it) => it.classList.add("blurred"));
-      el.classList.add("selected");
-      el.classList.remove("blurred");
-
-      loadSimilar(el.dataset.id);
-    });
-  });
+  resultsContainer.innerHTML = results.map(buildItemHtml).join("");
 }
-
 
 async function loadSimilar(id) {
   similarItemsContainer.innerHTML = "<p>Loading similar items...</p>";
 
   try {
-    const response = await fetch(`${API_BASE}/similar`, {
+    const resp = await fetch(`${API_BASE}/similar`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, top_k: 5 }),
     });
 
-    if (!response.ok) {
-      similarItemsContainer.innerHTML = `<p>Error: ${response.status}</p>`;
+    if (!resp.ok) {
+      similarItemsContainer.innerHTML = `<p>Error: ${resp.status}</p>`;
       return;
     }
 
-    const data = await response.json();
-    renderSimilarItems(data.results || []);
-  } catch (err) {
-    console.error(err);
+    const data = await resp.json();
+    const results = data.results || [];
+
+    const simBoxTitle = $(".similarity-box p");
+    if (simBoxTitle) simBoxTitle.style.display = results.length ? "block" : "none";
+
+    if (!results.length) {
+      similarItemsContainer.innerHTML = "<p>No similar items.</p>";
+      if (helpBox) helpBox.style.display = "block";
+      return;
+    }
+
+    if (helpBox) helpBox.style.display = "none";
+
+    similarItemsContainer.innerHTML = results
+      .map((r) => {
+        const authorsHtml = (r.authors || [])
+          .map((a) => {
+            const n = escapeHtml(a.name);
+            return a.verified_id
+              ? `<span class="result-author verified">${n}</span>`
+              : `<span class="result-author">${n}</span>`;
+          })
+          .join(", ");
+
+        const abstractText = escapeHtml(r.abstract);
+        const hrHtml = abstractText ? `<hr class="item-hr" />` : "";
+
+        const doiHtml = r.doi
+          ? `<div class="result-doi">DOI: <span class="result-doi-link" onclick="window.open('https://doi.org/${escapeHtml(
+            r.doi
+          )}','_blank')">${escapeHtml(r.doi)}</span></div>`
+          : "";
+
+        const scopusHtml = r.scopus_id
+          ? `<div class="result-doi">Scopus: <span class="result-doi-link" onclick="window.open('https://www.scopus.com/record/display.uri?eid=2-s2.0-${escapeHtml(
+            r.scopus_id
+          )}','_blank')">${escapeHtml(r.scopus_id)}</span></div>`
+          : "";
+
+        return `
+          <div class="result-item" data-id="${r.id}">
+            <div class="result-header">
+              ${r.dense_score != null
+            ? `<div class="result-score">specter2: ${Number(r.dense_score).toFixed(3)}${r.dense_rank ? `, rank: ${r.dense_rank}` : ""
+            }</div>`
+            : ""
+          }
+              ${r.lex_score != null
+            ? `<div class="result-score">bm25: ${Number(r.lex_score).toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ""
+            }</div>`
+            : ""
+          }
+              <div class="result-pills">
+                ${verifiedHtml(r)}
+                <div class="result-pill">${escapeHtml(r?.type?.label)}</div>
+                <div class="result-pill">${escapeHtml(r?.type?.type_label)}</div>
+                <div class="result-pill">${escapeHtml(r?.year)}</div>
+              </div>
+            </div>
+
+            <div class="result-title">${escapeHtml(r?.title)}</div>
+            <div class="result-authors">${authorsHtml}</div>
+
+            ${hrHtml}
+            <div class="result-abstract">${abstractText}</div>
+
+            <div class="result-source">
+              <i class="fa-solid fa-newspaper result-source-icon" aria-hidden="true"></i>
+              <em>${escapeHtml(r?.source?.title)}</em>
+            </div>
+
+            ${doiHtml}
+            ${scopusHtml}
+          </div>
+        `;
+      })
+      .join("");
+  } catch (_) {
     similarItemsContainer.innerHTML = "<p>Network Error.</p>";
   }
 }
 
-function renderSimilarItems(results) {
-  const simBoxTitle = document.querySelector(".similarity-box p");
-  simBoxTitle.style.display = results.length ? "block" : "none";
+function openOrCloseSimilar(itemEl) {
+  const items = $$(".result-item", resultsContainer);
+  const simBoxTitle = $(".similarity-box p");
 
-  if (!results.length) {
-    similarItemsContainer.innerHTML = "<p>No similar items.</p>";
+  if (itemEl.classList.contains("selected")) {
+    itemEl.classList.remove("selected");
+    items.forEach((it) => it.classList.remove("blurred"));
+    similarItemsContainer.innerHTML = "";
+    if (simBoxTitle) simBoxTitle.style.display = "none";
+    if (helpBox) helpBox.style.display = "block";
     return;
   }
 
-  similarItemsContainer.innerHTML = results
-    .map((r) => buildItemHtml(r, { scoreLabel: "similarity score", showFeedback: false }))
-    .join("");
+  items.forEach((it) => it.classList.remove("selected"));
+  items.forEach((it) => it.classList.add("blurred"));
+  itemEl.classList.add("selected");
+  itemEl.classList.remove("blurred");
+  if (helpBox) helpBox.style.display = "none";
+  loadSimilar(itemEl.dataset.id);
 }
 
-
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.innerText = text == null ? "" : text;
-  return div.innerHTML;
+function itemClearWhy(item) {
+  const panel = $("[data-why-panel]", item);
+  const tell = $(".tell-us-why", item);
+  panel?.classList.remove("open");
+  $$('input[type="checkbox"]', panel).forEach((cb) => (cb.checked = false));
+  const other = $(".why-other-text", panel);
+  if (other) {
+    other.value = "";
+    other.classList.remove("visible");
+  }
+  tell?.classList.remove("visible");
+  tell?.setAttribute("aria-expanded", "false");
+  delete item.dataset.itemReasons;
 }
 
-// Feedback event delegation
+function itemReason(item) {
+  const panel = $("[data-why-panel]", item);
+  if (!panel) return "";
+  const selected = $$('input[type="checkbox"]:checked', panel).map((x) => x.value);
+
+  const otherCb = $('input[type="checkbox"][value="other"]', panel);
+  const otherTxt = $(".why-other-text", panel)?.value?.trim() || "";
+
+  if (otherCb?.checked && otherTxt) {
+    return selected.filter((x) => x !== "other").concat(`other:${otherTxt}`).join(",");
+  }
+  return selected.join(",");
+}
+
+function itemSyncOtherVisibility(item) {
+  const panel = $("[data-why-panel]", item);
+  if (!panel) return;
+  const otherCb = $('input[type="checkbox"][value="other"]', panel);
+  const other = $(".why-other-text", panel);
+  if (!other) return;
+  other.classList.toggle("visible", !!otherCb?.checked);
+  if (!otherCb?.checked) other.value = "";
+}
+
 resultsContainer.addEventListener(
   "click",
   (e) => {
-    const inFeedbackArea = e.target.closest("[data-feedback], .result-feedback-tellus, [data-why-panel]");
-  if (inFeedbackArea) {
-    e.preventDefault();
-    e.stopImmediatePropagation();
-  }
-    const closeBtn = e.target.closest(".why-close");
-    if (closeBtn) {
-      e.preventDefault();
+    const item = e.target.closest(".result-item");
+    if (!item) return;
+
+    if (e.target.closest("[data-feedback], [data-why-panel]")) {
+      e.stopPropagation();
       e.stopImmediatePropagation();
-
-      const item = closeBtn.closest(".result-item");
-      const panel = item?.querySelector("[data-why-panel]");
-      const tell = item?.querySelector(".tell-us-why");
-
-      panel?.classList.remove("open");
-      tell?.setAttribute("aria-expanded", "false");
+    } else {
+      openOrCloseSimilar(item);
       return;
     }
 
-    const thumb = e.target.closest(".thumb-btn");
-    if (thumb) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      const item = thumb.closest(".result-item");
-      if (!item) return;
-
-      const feedbackBox = item.querySelector("[data-feedback]");
-      const notBtn = feedbackBox?.querySelector(".not-relevant-btn");
-      const relBtn = feedbackBox?.querySelector(".relevant-btn");
-      const tell = item.querySelector(".tell-us-why");
-      const panel = item.querySelector("[data-why-panel]"); // FIX: non dentro feedbackBox
-
-      const isFailureBtn = thumb.classList.contains("not-relevant-btn");
-      const wasActive = thumb.classList.contains("active");
-
-      const clearWhy = () => {
-        if (panel) {
-          panel.classList.remove("open");
-          panel
-            .querySelectorAll('input[type="checkbox"]')
-            .forEach((cb) => (cb.checked = false));
-        }
-        if (tell) {
-          tell.classList.remove("visible");
-          tell.setAttribute("aria-expanded", "false");
-        }
-        delete item.dataset.itemReasons;
-      };
-
-      if (wasActive) {
-        thumb.classList.remove("active");
-        delete item.dataset.itemFeedback;
-        clearWhy();
-        return;
-      }
-
-      notBtn?.classList.remove("active");
-      relBtn?.classList.remove("active");
-
-      thumb.classList.add("active");
-      item.dataset.itemFeedback = isFailureBtn ? "bad" : "good";
-
-      if (isFailureBtn) {
-        if (tell) tell.classList.add("visible");
-        if (panel) panel.classList.remove("open");
-        if (tell) tell.setAttribute("aria-expanded", "false");
-      } else {
-        clearWhy();
-      }
-
-      // TODO backend
-
+    if (e.target.closest(".why-close")) {
+      $("[data-why-panel]", item)?.classList.remove("open");
+      $(".tell-us-why", item)?.setAttribute("aria-expanded", "false");
       return;
     }
 
     const tellBtn = e.target.closest(".tell-us-why");
     if (tellBtn) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      const item = tellBtn.closest(".result-item");
-      const panel = item?.querySelector("[data-why-panel]");
-      if (!panel) return;
-
-      const willOpen = !panel.classList.contains("open");
-      panel.classList.toggle("open", willOpen);
-      tellBtn.setAttribute("aria-expanded", String(willOpen));
-
+      if (!$(".not-relevant-btn", item)?.classList.contains("active")) return;
+      const panel = $("[data-why-panel]", item);
+      const willOpen = !panel?.classList.contains("open");
+      panel?.classList.toggle("open", willOpen);
+      tellBtn.setAttribute("aria-expanded", String(!!willOpen));
       return;
     }
 
-    const whyCheckbox = e.target.closest('[data-why-panel] input[type="checkbox"]');
-    if (whyCheckbox) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
+    const notBtn = e.target.closest(".not-relevant-btn");
+    const relBtn = e.target.closest(".relevant-btn");
+    const thumb = notBtn || relBtn;
+    if (thumb) {
+      const wasActive = thumb.classList.contains("active");
+      const isNot = !!notBtn;
 
-      const item = whyCheckbox.closest(".result-item");
-      const panel = whyCheckbox.closest("[data-why-panel]");
-      const selected = Array.from(panel.querySelectorAll('input[type="checkbox"]:checked'))
-        .map((cb) => cb.value);
+      if (wasActive) {
+        thumb.classList.remove("active");
+        delete item.dataset.itemFeedback;
+        itemClearWhy(item);
+        postFeedback({ item: { id: item.dataset.id, label: null, reason: null } });
+        return;
+      }
 
-      item.dataset.itemReasons = selected.join(",");
+      $(".not-relevant-btn", item)?.classList.remove("active");
+      $(".relevant-btn", item)?.classList.remove("active");
+      thumb.classList.add("active");
 
-      // TODO backend
+      item.dataset.itemFeedback = isNot ? "bad" : "good";
 
-      return;
+      if (isNot) {
+        $(".tell-us-why", item)?.classList.add("visible");
+        $("[data-why-panel]", item)?.classList.remove("open");
+        $(".tell-us-why", item)?.setAttribute("aria-expanded", "false");
+      } else {
+        itemClearWhy(item);
+      }
+
+      postFeedback({ item: { id: item.dataset.id, label: isNot ? 0 : 1, reason: null } });
     }
   },
   true
 );
 
-// Global feedback box
-(function setupGlobalFeedback() {
-  const box = document.getElementById("global-feedback");
-  if (!box) return;
+resultsContainer.addEventListener(
+  "change",
+  (e) => {
+    const cb = e.target.closest('[data-why-panel] input[type="checkbox"]');
+    if (!cb) return;
 
-  const yesBtn = box.querySelector('[data-global="yes"]');
-  const noBtn = box.querySelector('[data-global="no"]');
-  const tellBtn = box.querySelector(".global-tell");
-  const panel = box.querySelector("#global-why-panel");
-  const closeBtn = box.querySelector("#global-why-panel .why-close");
-
-  const clearWhy = () => {
-    panel?.classList.remove("open");
-    tellBtn?.setAttribute("aria-expanded", "false");
-    panel
-      ?.querySelectorAll('input[type="checkbox"]')
-      .forEach((cb) => (cb.checked = false));
-    delete box.dataset.globalReasons;
-  };
-
-  const hideTell = () => {
-    tellBtn?.classList.remove("visible");
-    clearWhy();
-  };
-
-  const showTell = () => {
-    tellBtn?.classList.add("visible");
-    panel?.classList.remove("open");
-    tellBtn?.setAttribute("aria-expanded", "false");
-  };
-
-  closeBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
     e.stopPropagation();
-    panel?.classList.remove("open");
-    tellBtn?.setAttribute("aria-expanded", "false");
-  });
+    e.stopImmediatePropagation();
 
-  const onThumb = (btn, value) => (e) => {
-    e.preventDefault();
+    const item = cb.closest(".result-item");
+    if (!item) return;
+
+    itemSyncOtherVisibility(item);
+
+    if (item.dataset.itemFeedback === "bad") {
+      postFeedback({ item: { id: item.dataset.id, label: 0, reason: itemReason(item) } });
+    }
+  },
+  true
+);
+
+resultsContainer.addEventListener(
+  "keydown",
+  (e) => {
+    const ta = e.target.closest('[data-why-panel] .why-other-text');
+    if (!ta) return;
+
     e.stopPropagation();
+    e.stopImmediatePropagation();
 
-    const wasActive = btn.classList.contains("active");
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const item = ta.closest(".result-item");
+      if (!item) return;
 
-    if (wasActive) {
-      btn.classList.remove("active");
-      delete box.dataset.globalFeedback;
-      hideTell();
+      if (item.dataset.itemFeedback === "bad") {
+        postFeedback({ item: { id: item.dataset.id, label: 0, reason: itemReason(item) } });
+      }
+      ta.blur();
+    }
+  },
+  true
+);
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const query = $("#query")?.value?.trim() || "";
+  if (!query) return;
+
+  resultsContainer.innerHTML = "<p>Searching...</p>";
+  similarItemsContainer.innerHTML = "";
+
+  try {
+    const r = await fetch(`${API_BASE}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-user-id": USER_ID },
+      body: JSON.stringify({ query, top_k: getTopK(), mode: "hybrid", filters: getFilters() }),
+    });
+
+    if (!r.ok) {
+      resultsContainer.innerHTML = `<p>Error: ${r.status}</p>`;
       return;
     }
 
-    yesBtn?.classList.remove("active");
-    noBtn?.classList.remove("active");
-    btn.classList.add("active");
+    const data = await r.json();
+    currentFeedbackId = data.feedback_id ?? null;
 
-    box.dataset.globalFeedback = value;
+    resetGlobalUI();
+    const fbBox = $("#global-feedback .form-buttons");
+    if (fbBox) fbBox.style.display = "flex";
 
-    if (value === "no") {
-      showTell();
-    } else {
-      hideTell();
+    renderResults(data.results || []);
+  } catch (_) {
+    resultsContainer.innerHTML = "<p>Network Error.</p>";
+  }
+});
+
+(function setupGlobalFeedback() {
+  const box = $("#global-feedback");
+  if (!box) return;
+
+  const yesBtn = $('[data-global="yes"]', box);
+  const noBtn = $('[data-global="no"]', box);
+  const tellBtn = $(".global-tell", box);
+  const panel = $("#global-why-panel", box);
+
+  function gOtherVisibility() {
+    const otherCb = $('input[type="checkbox"][value="other"]', panel);
+    const other = $(".why-other-text", panel);
+    if (!other) return;
+    other.classList.toggle("visible", !!otherCb?.checked);
+    if (!otherCb?.checked) other.value = "";
+  }
+
+  function gReason() {
+    const selected = $$('input[type="checkbox"]:checked', panel).map((x) => x.value);
+    const otherCb = $('input[type="checkbox"][value="other"]', panel);
+    const otherTxt = $(".why-other-text", panel)?.value?.trim() || "";
+
+    if (otherCb?.checked && otherTxt) {
+      return selected.filter((x) => x !== "other").concat(`other:${otherTxt}`).join(",");
+    }
+    return selected.join(",");
+  }
+
+  function gClear() {
+    panel?.classList.remove("open");
+    tellBtn?.setAttribute("aria-expanded", "false");
+    $$('input[type="checkbox"]', panel).forEach((cb) => (cb.checked = false));
+    const other = $(".why-other-text", panel);
+    if (other) {
+      other.value = "";
+      other.classList.remove("visible");
+    }
+    delete box.dataset.globalReasons;
+  }
+
+  function gShowTell() {
+    tellBtn?.classList.add("visible");
+    panel?.classList.remove("open");
+    tellBtn?.setAttribute("aria-expanded", "false");
+  }
+
+  function gHideTell() {
+    tellBtn?.classList.remove("visible");
+    gClear();
+  }
+
+  function setGlobal(value) {
+    const btn = value === 1 ? yesBtn : noBtn;
+    const other = value === 1 ? noBtn : yesBtn;
+
+    const wasActive = btn?.classList.contains("active");
+    if (wasActive) {
+      btn.classList.remove("active");
+      gHideTell();
+      postFeedback({ global_feedback: null, global_reason: null });
+      return;
     }
 
-    // TODO backend
-  };
+    other?.classList.remove("active");
+    btn?.classList.add("active");
 
-  yesBtn?.addEventListener("click", onThumb(yesBtn, "yes"));
-  noBtn?.addEventListener("click", onThumb(noBtn, "no"));
+    if (value === 0) gShowTell();
+    else gHideTell();
+
+    postFeedback({ global_feedback: value, global_reason: null });
+  }
+
+  yesBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setGlobal(1);
+  });
+
+  noBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setGlobal(0);
+  });
 
   tellBtn?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-
     if (!noBtn?.classList.contains("active")) return;
-
     const willOpen = !panel.classList.contains("open");
     panel.classList.toggle("open", willOpen);
     tellBtn.setAttribute("aria-expanded", String(willOpen));
   });
 
   panel?.addEventListener("click", (e) => {
+    const close = e.target.closest(".why-close");
+    if (!close) return;
+    e.preventDefault();
+    e.stopPropagation();
+    panel.classList.remove("open");
+    tellBtn?.setAttribute("aria-expanded", "false");
+  });
+
+  panel?.addEventListener("change", (e) => {
     const cb = e.target.closest('input[type="checkbox"]');
     if (!cb) return;
 
-    e.preventDefault();
     e.stopPropagation();
 
-    const selected = Array.from(panel.querySelectorAll('input[type="checkbox"]:checked'))
-      .map((x) => x.value);
+    gOtherVisibility();
+    const reason = gReason();
+    box.dataset.globalReasons = reason;
 
-    box.dataset.globalReasons = selected.join(",");
-
-    // TODO backend (optional)
+    if (noBtn?.classList.contains("active")) {
+      postFeedback({ global_feedback: 0, global_reason: reason });
+    }
   });
 
+  panel?.addEventListener("keydown", (e) => {
+    const ta = e.target.closest(".why-other-text");
+    if (!ta) return;
+
+    e.stopPropagation();
+
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      gOtherVisibility();
+      const reason = gReason();
+      box.dataset.globalReasons = reason;
+
+      if (noBtn?.classList.contains("active")) {
+        postFeedback({ global_feedback: 0, global_reason: reason });
+      }
+      ta.blur();
+    }
+  });
 })();

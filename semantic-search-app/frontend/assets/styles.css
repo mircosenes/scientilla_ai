@@ -633,3 +633,41 @@ button:hover {
 .global-why {
   margin-top: 0.5rem;
 }
+
+.why-other-text {
+  display: none;
+  margin-top: 0.4rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #dce1e7;
+  border-radius: 8px;
+  background-color: #f9fbff;
+  outline: none;
+}
+
+.why-other-text.visible {
+  display: block;
+}
+
+.instructions-help {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+  border: 1px solid #d1d9e6;
+  border-radius: 15px;
+  padding: 2rem;
+  color: #555;
+  font-size: 1rem;
+  margin: 0 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.instructions-help strong {
+  color: #457b9d;
+  font-weight: 550;
+}
+
+.instructions-title{
+  color: #1d3557;
+  font-size: 1rem;
+  font-weight: 550;
+  margin-bottom: 0.5rem;
+}
