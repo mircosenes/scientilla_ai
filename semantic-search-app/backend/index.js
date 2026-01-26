@@ -272,9 +272,9 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
     i++;
   }
 
-  // keyword
-    if (has(filters.keyword)) {
-    where.push(`(ri.fts @@ websearch_to_tsquery('english', $${i}))`);
+  // keyword (FTS)
+  if (has(filters.keyword)) {
+    where.push(`ri.fts @@ websearch_to_tsquery('english', $${i})`);
     params.push(String(filters.keyword).trim());
     i++;
   }
@@ -317,7 +317,7 @@ function rrfFuse({ denseRows, lexRows, k = 60 }) {
       data: null,
     };
     prev.lex_rank = idx + 1;
-    prev.lex_score = Number(r.score);
+    prev.lex_score = -Number(r.score);
     prev.data = r.data ?? prev.data;
     prev.rrf += 1 / (k + (idx + 1));
     acc.set(id, prev);
@@ -334,9 +334,9 @@ app.post("/api/search", async (req, res) => {
   }
 
   const MODE = String(mode || "hybrid").trim().toLowerCase();
-  const VALID = new Set(["hybrid", "specter2", "fts"]);
+  const VALID = new Set(["hybrid", "specter2", "bm25"]);
   if (!VALID.has(MODE)) {
-    return res.status(400).json({ error: "invalid mode (use: hybrid|specter2|fts)" });
+    return res.status(400).json({ error: "invalid mode (use: hybrid|specter2|bm25)" });
   }
 
   // determine TOPK for dense and lex searches
@@ -390,43 +390,41 @@ app.post("/api/search", async (req, res) => {
         LIMIT $${2 + params.length};
       `;
 
-    // 2) build SQL for lexical search (FTS)
+    // 2) build SQL for lexical search (bm25)
     const lexSql = hasFilters
-      ? `
-        WITH filtered AS MATERIALIZED (
-          SELECT
-            ri.id,
-            ri.data,
-            ri.fts,
-            ri.research_item_type_id
-          FROM research_item ri
-          LEFT JOIN research_item_type rit
-            ON rit.id = ri.research_item_type_id
-          WHERE ri.kind = 'verified'
-          ${clause}
-        )
-        SELECT
-          f.id,
-          f.data,
-          ts_rank_cd(f.fts, qq) AS score
-        FROM filtered f,
-             websearch_to_tsquery('english', $1) qq
-        WHERE f.fts @@ qq
-        ORDER BY score DESC
-        LIMIT $${2 + params.length};
-      `
-      : `
-        SELECT
-          ri.id,
-          ri.data,
-          ts_rank_cd(ri.fts, qq) AS score
-        FROM research_item ri,
-             websearch_to_tsquery('english', $1) qq
-        WHERE ri.kind = 'verified'
-          AND ri.fts @@ qq
-        ORDER BY score DESC
-        LIMIT $${2 + params.length};
-      `;
+  ? `
+    WITH filtered AS MATERIALIZED (
+      SELECT
+        ri.id,
+        ri.data,
+        ri.search_text,
+        ri.research_item_type_id
+      FROM research_item ri
+      LEFT JOIN research_item_type rit
+        ON rit.id = ri.research_item_type_id
+      WHERE ri.kind = 'verified'
+      ${clause}
+    )
+    SELECT
+      f.id,
+      f.data,
+      (f.search_text <@> to_bm25query($1, 'research_item_bm25_idx')) AS score
+    FROM filtered f
+    ORDER BY score ASC
+    LIMIT $${2 + params.length};
+  `
+  : `
+    SELECT
+      ri.id,
+      ri.data,
+      (ri.search_text <@> to_bm25query($1, 'research_item_bm25_idx')) AS score
+    FROM research_item ri
+    LEFT JOIN research_item_type rit
+      ON rit.id = ri.research_item_type_id
+    WHERE ri.kind = 'verified'
+    ORDER BY score ASC
+    LIMIT $${2 + params.length};
+  `;
 
     const client = await pool.connect();
     try {
@@ -459,7 +457,7 @@ app.post("/api/search", async (req, res) => {
           break;
         }
 
-        case "fts": {
+        case "bm25": {
           const lexRes = await client.query(
             lexSql,
             [q, ...params, TOPK_LEX]

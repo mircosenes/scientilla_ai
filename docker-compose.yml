@@ -1,7 +1,9 @@
 services:
   db:
-    image: pgvector/pgvector:pg16
+    #image: paradedb/paradedb:latest
+    build: .
     container_name: scientilla_ai-db
+    shm_size: 1g
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -9,7 +11,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     networks: [appnet]
 
   embedding-service:
@@ -41,5 +43,5 @@ networks:
     driver: bridge
 
 volumes:
-  dbdata:
+  pgdata:
   hf-cache:

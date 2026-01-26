@@ -23,6 +23,7 @@ semantic-search-app/backend/package-lock.json
 semantic-search-app/backend/.env
 
 dump.sql
+backup.sql
 db.md
 
 test
