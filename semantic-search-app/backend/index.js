@@ -334,9 +334,9 @@ app.post("/api/search", async (req, res) => {
   }
 
   const MODE = String(mode || "hybrid").trim().toLowerCase();
-  const VALID = new Set(["hybrid", "specter2", "bm25"]);
+  const VALID = new Set(["hybrid", "specter2", "fts"]);
   if (!VALID.has(MODE)) {
-    return res.status(400).json({ error: "invalid mode (use: hybrid|specter2|bm25)" });
+    return res.status(400).json({ error: "invalid mode (use: hybrid|specter2|fts)" });
   }
 
   // determine TOPK for dense and lex searches
@@ -459,7 +459,7 @@ app.post("/api/search", async (req, res) => {
           break;
         }
 
-        case "bm25": {
+        case "fts": {
           const lexRes = await client.query(
             lexSql,
             [q, ...params, TOPK_LEX]

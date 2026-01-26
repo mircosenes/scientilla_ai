@@ -153,7 +153,7 @@ function buildItemHtml(r) {
     <div class="result-item" data-id="${r.id}">
       <div class="result-header">
         ${r.dense_score != null ? `<div class="result-score">specter2: ${r.dense_score.toFixed(3)}${r.dense_rank ? `, rank: ${r.dense_rank}` : ""}</div>` : ""}
-        ${r.lex_score != null ? `<div class="result-score">bm25: ${r.lex_score.toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ""}</div>` : ""}
+        ${r.lex_score != null ? `<div class="result-score">fts: ${r.lex_score.toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ""}</div>` : ""}
         <div class="result-pills">
           ${verifiedHtml(r)}
           <div class="result-pill">${escapeHtml(r?.type?.label)}</div>
@@ -270,7 +270,7 @@ async function loadSimilar(id) {
             : ""
           }
               ${r.lex_score != null
-            ? `<div class="result-score">bm25: ${Number(r.lex_score).toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ""
+            ? `<div class="result-score">fts: ${Number(r.lex_score).toFixed(3)}${r.lex_rank ? `, rank: ${r.lex_rank}` : ""
             }</div>`
             : ""
           }
