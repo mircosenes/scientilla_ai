@@ -671,3 +671,9 @@ button:hover {
   font-weight: 550;
   margin-bottom: 0.5rem;
 }
+
+.filter-group select {
+  cursor: pointer;
+  padding: 0.5rem;
+  color: rgb(53, 52, 52);
+}

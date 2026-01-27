@@ -805,3 +805,42 @@ app.post("/api/feedback", async (req, res) => {
     client.release();
   }
 });
+
+
+// endpoint to get filter options
+app.get("/api/filter-options", async (req, res) => {
+  try {
+    const typesSql = `
+      SELECT
+        id,
+        key,
+        label,
+        type,
+        type_label
+      FROM research_item_type
+      ORDER BY type_label NULLS LAST, label NULLS LAST, key;
+    `;
+
+    const sourceTypesSql = `
+      SELECT
+        st.id,
+        st.key,
+        st.label
+      FROM source_type st
+      ORDER BY st.label NULLS LAST, st.key NULLS LAST, st.id;
+    `;
+
+    const [typesRes, sourceTypesRes] = await Promise.all([
+      pool.query(typesSql),
+      pool.query(sourceTypesSql),
+    ]);
+
+    return res.json({
+      types: typesRes.rows,
+      source_types: sourceTypesRes.rows,
+    });
+  } catch (err) {
+    console.error("Error in /api/filter-options:", err);
+    return res.status(500).json({ error: "internal error" });
+  }
+});

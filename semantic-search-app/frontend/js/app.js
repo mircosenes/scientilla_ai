@@ -206,6 +206,45 @@ function renderResults(results) {
   resultsContainer.innerHTML = results.map(buildItemHtml).join("");
 }
 
+async function loadFilterOptions() {
+  try {
+    const r = await fetch(`${API_BASE}/filter-options`);
+    if (!r.ok) return;
+
+    const data = await r.json();
+    const types = Array.isArray(data.types) ? data.types : [];
+    const sourceTypes = Array.isArray(data.source_types) ? data.source_types : [];
+
+    typeInput.innerHTML = `<option value="">Any</option>` + types
+      .map(t => {
+        const label = (t.label || t.key || "").trim();
+        const group = (t.type_label || t.type || "").trim();
+        const text = group ? `${label} - ${group}` : label;
+        const value = (t.key || "").trim();
+        return value ? `<option value="${escapeHtml(value)}">${escapeHtml(text)}</option>` : "";
+      })
+      .filter(Boolean)
+      .join("");
+
+    sourceTypeInput.innerHTML = `<option value="">Any</option>` + sourceTypes
+      .map(st => {
+        const key = (st.key || "").trim();
+        const label = (st.label || "").trim();
+        const id = (st.source_type_id || "").trim();
+
+        const value = key || label || id;
+        const text = label || key || id;
+
+        return value ? `<option value="${escapeHtml(value)}">${escapeHtml(text)}</option>` : "";
+      })
+      .filter(Boolean)
+      .join("");
+
+  } catch (_) {}
+}
+
+loadFilterOptions();
+
 async function loadSimilar(id) {
   similarItemsContainer.innerHTML = "<p>Loading similar items...</p>";
 
