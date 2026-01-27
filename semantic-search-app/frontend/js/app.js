@@ -15,7 +15,7 @@ const typeInput = $("#filter-type");
 const keywordInput = $("#filter-keyword");
 const clearFiltersBtn = $("#clear-filters-btn");
 
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = "/api";
 
 let currentFeedbackId = null;
 

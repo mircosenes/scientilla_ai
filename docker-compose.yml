@@ -1,6 +1,5 @@
 services:
   db:
-    #image: paradedb/paradedb:latest
     build: .
     container_name: scientilla_ai-db
     shm_size: 1g
@@ -12,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks: [appnet]
+    networks: [default]
 
   embedding-service:
     build: ./embedding-service
@@ -22,8 +21,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-       - hf-cache:/root/.cache/huggingface
-    networks: [appnet]
+      - hf-cache:/root/.cache/huggingface
+    networks: [default]
 
   node-app:
     build: ./semantic-search-app/backend
@@ -31,16 +30,39 @@ services:
       - PORT=3000
       - EMBED_URL=http://embedding-service:8000
       - DB_URL=postgresql://postgres:postgres@db:5432/postgres
-    ports:
-      - "3000:3000"
     depends_on:
       - db
       - embedding-service
-    networks: [appnet]
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.scientilla-backend.rule=Host(`search-scientilla.iit.test`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.scientilla-backend.entrypoints=websecure"
+      - "traefik.http.routers.scientilla-backend.tls=true"
+      - "traefik.http.services.scientilla-backend.loadbalancer.server.port=3000"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./static-server/Dockerfile
+    container_name: scientilla_ai-nginx
+    depends_on:
+      - node-app
+    networks:
+      - default
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.scientilla-frontend.rule=Host(`search-scientilla.iit.test`)"
+      - "traefik.http.routers.scientilla-frontend.entrypoints=websecure"
+      - "traefik.http.routers.scientilla-frontend.tls=true"
+      - "traefik.http.services.scientilla-frontend.loadbalancer.server.port=80"
 
 networks:
-  appnet:
-    driver: bridge
+  traefik:
+    external: true
 
 volumes:
   pgdata:
