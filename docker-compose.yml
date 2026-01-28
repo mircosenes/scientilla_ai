@@ -39,7 +39,7 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.scientilla-backend.rule=Host(`search-scientilla.iit.test`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.scientilla-backend.rule=Host(`${URL}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.scientilla-backend.entrypoints=websecure"
       - "traefik.http.routers.scientilla-backend.tls=true"
       - "traefik.http.services.scientilla-backend.loadbalancer.server.port=3000"
@@ -57,7 +57,7 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.scientilla-frontend.rule=Host(`search-scientilla.iit.test`)"
+      - "traefik.http.routers.scientilla-frontend.rule=Host(`${URL}`)"
       - "traefik.http.routers.scientilla-frontend.entrypoints=websecure"
       - "traefik.http.routers.scientilla-frontend.tls=true"
       - "traefik.http.services.scientilla-frontend.loadbalancer.server.port=80"
