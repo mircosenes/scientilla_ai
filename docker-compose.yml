@@ -1,35 +1,36 @@
 services:
   db:
+    restart: always
     build: .
     container_name: scientilla_ai-db
     shm_size: 1g
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=postgres
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks: [default]
 
   embedding-service:
+    restart: always
     build: ./embedding-service
     environment:
       - MODEL_NAME=allenai/specter2_base
       - ADAPTER_NAME=allenai/specter2_adhoc_query
-    ports:
-      - "8000:8000"
     volumes:
       - hf-cache:/root/.cache/huggingface
     networks: [default]
 
   node-app:
+    restart: always
     build: ./semantic-search-app/backend
     environment:
       - PORT=3000
       - EMBED_URL=http://embedding-service:8000
-      - DB_URL=postgresql://postgres:postgres@db:5432/postgres
+      - DB_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
     depends_on:
       - db
       - embedding-service
@@ -44,6 +45,7 @@ services:
       - "traefik.http.services.scientilla-backend.loadbalancer.server.port=3000"
 
   nginx:
+    restart: always
     build:
       context: .
       dockerfile: ./static-server/Dockerfile

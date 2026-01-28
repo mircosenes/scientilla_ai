@@ -27,3 +27,5 @@ backup.sql
 db.md
 
 test
+
+.env
