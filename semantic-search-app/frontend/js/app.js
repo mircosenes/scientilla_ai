@@ -7,7 +7,8 @@ const similarItemsContainer = $("#similar-items");
 const helpBox = $("#instructions-help")
 
 
-const yearInput = $("#filter-year");
+const yearFromInput = $("#filter-year-from");
+const yearToInput = $("#filter-year-to");
 const authorInput = $("#filter-author");
 const sourceTitleInput = $("#filter-source-title");
 const sourceTypeInput = $("#filter-source-type");
@@ -56,7 +57,8 @@ function getTopK() {
 
 function getFilters() {
   return {
-    year: yearInput.value.trim() || undefined,
+    year_from: yearFromInput?.value.trim() || undefined,
+    year_to: yearToInput?.value.trim() || undefined,
     author: authorInput.value.trim() || undefined,
     source_title: sourceTitleInput.value.trim() || undefined,
     source_type: sourceTypeInput.value.trim() || undefined,
@@ -67,7 +69,8 @@ function getFilters() {
 
 
 clearFiltersBtn?.addEventListener("click", () => {
-  yearInput.value = "";
+  yearFromInput.value = "";
+  yearToInput.value = "";
   authorInput.value = "";
   sourceTitleInput.value = "";
   sourceTypeInput.value = "";

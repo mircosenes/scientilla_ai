@@ -49,48 +49,64 @@
           </div>
 
           <div class="filters-grid">
-            <div class="filter-group">
-              <label for="top-k"><i class="fa-solid fa-list-ol"></i> Results </label>
-              <select id="top-k">
-                <option value="5">5</option>
-                <option value="10" selected>10</option>
-                <option value="20">20</option>
-              </select>
+            <div>
+              <div class="filter-group small-input">
+                <label for="top-k"><i class="fa-solid fa-list-ol"></i> Results </label>
+                <select id="top-k">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                </select>
+              </div>
+              <div class="filter-group small-input">
+                <label for="filter-type"><i class="fa-solid fa-file-lines"></i> Type</label>
+                <select id="filter-type">
+                  <option value="">Any</option>
+                </select>
+              </div>
             </div>
 
-            <div class="filter-group small-input">
-              <label for="filter-year"><i class="fa-solid fa-calendar-days"></i> Year</label>
-              <input type="text" id="filter-year" placeholder="Es. 2024" />
+
+            <div>
+              <div class="filter-group small-input">
+                <label for="filter-year-from"><i class="fa-solid fa-calendar-days"></i> Year from</label>
+                <input type="number" min="1900" max="2099" id="filter-year-from" placeholder="2018"
+                  oninput="javascript: if (this.value.length > 4) this.value = this.value.slice(0, 4);" />
+              </div>
+
+              <div class="filter-group small-input">
+                <label for="filter-year-to"><i class="fa-solid fa-calendar-days"></i> Year to</label>
+                <input type="number" min="1900" max="2099" id="filter-year-to" placeholder="2024"
+                  oninput="javascript: if (this.value.length > 4) this.value = this.value.slice(0, 4);" />
+              </div>
             </div>
 
-            <div class="filter-group">
-              <label for="filter-author"><i class="fa-solid fa-user"></i> Author</label>
-              <input type="text" id="filter-author" placeholder="Es. Rossi" />
+            <div>
+              <div class="filter-group half-width">
+                <label for="filter-source-title"><i class="fa-solid fa-book"></i> Source Title</label>
+                <input type="text" id="filter-source-title" placeholder="Nature" />
+              </div>
+
+              <div class="filter-group half-width">
+                <label for="filter-source-type"><i class="fa-solid fa-tags"></i> Source Type</label>
+                <select id="filter-source-type">
+                  <option value="">Any</option>
+                </select>
+              </div>
             </div>
 
-            <div class="filter-group">
-              <label for="filter-type"><i class="fa-solid fa-file-lines"></i> Type</label>
-              <select id="filter-type">
-                <option value="">Any</option>
-              </select>
+            <div>
+              <div class="filter-group">
+                <label for="filter-author"><i class="fa-solid fa-user"></i> Author</label>
+                <input type="text" id="filter-author" placeholder="Rossi" />
+              </div>
+
+              <div class="filter-group full-width">
+                <label for="filter-keyword"><i class="fa-solid fa-magnifying-glass"></i> Keywords</label>
+                <input type="text" id="filter-keyword" placeholder='iCub -ErgoCub (use "-" to exclude)' />
+              </div>
             </div>
 
-            <div class="filter-group">
-              <label for="filter-source-title"><i class="fa-solid fa-book"></i> Source Title</label>
-              <input type="text" id="filter-source-title" placeholder="Es. Nature" />
-            </div>
-
-            <div class="filter-group">
-              <label for="filter-source-type"><i class="fa-solid fa-tags"></i> Source Type</label>
-              <select id="filter-source-type">
-                <option value="">Any</option>
-              </select>
-            </div>
-            
-            <div class="filter-group">
-              <label for="filter-keyword"><i class="fa-solid fa-magnifying-glass"></i> Keyword</label>
-              <input type="text" id="filter-keyword" placeholder='Es. "reinforcement learning" -survey' />
-            </div>
 
           </div>
         </div>

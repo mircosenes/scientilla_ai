@@ -475,8 +475,10 @@ button:hover {
 .filters-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 2rem;
+  margin-left: 1rem;
 }
+
 
 .filter-group {
   display: flex;
@@ -500,8 +502,8 @@ button:hover {
 
 .filter-group input, 
 .filter-group select {
-  max-width: 7.5rem;
   padding: 0.3rem 0.6rem;
+  margin-bottom: 1rem;
   border: 1px solid #dce1e7;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -676,4 +678,21 @@ button:hover {
   cursor: pointer;
   padding: 0.5rem;
   color: rgb(53, 52, 52);
+}
+
+.small-input input, .small-input select {
+  width: 4.5rem;
+}
+
+#filter-year-from, #filter-year-to {
+  padding: 0.56rem;
+}
+
+.full-width {
+  flex: 1;
+  width: 25rem;
+}
+
+.half-width {
+  width: 8rem;
 }

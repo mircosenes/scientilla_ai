@@ -219,15 +219,26 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
 
   const has = (v) => v !== undefined && v !== null && String(v).trim() !== "";
 
-  // year
-  if (has(filters.year)) {
-    const year = String(filters.year).trim();
-    if (!/^\d{4}$/.test(year)) {
-      throw new Error("invalid year");
-    }
+  // year range
+  const yearFrom = has(filters.year_from) ? String(filters.year_from).trim() : "";
+  const yearTo = has(filters.year_to) ? String(filters.year_to).trim() : "";
 
-    where.push(`(ri.data->>'year') = $${i}`);
-    params.push(String(filters.year).trim());
+  if (yearFrom && !/^\d{4}$/.test(yearFrom)) throw new Error("invalid year_from");
+  if (yearTo && !/^\d{4}$/.test(yearTo)) throw new Error("invalid year_to");
+
+  if (yearFrom && yearTo) {
+    const a = Number(yearFrom), b = Number(yearTo);
+    const lo = Math.min(a, b), hi = Math.max(a, b);
+    where.push(`(ri.data->>'year')::int BETWEEN $${i} AND $${i + 1}`);
+    params.push(lo, hi);
+    i += 2;
+  } else if (yearFrom) {
+    where.push(`(ri.data->>'year')::int >= $${i}`);
+    params.push(Number(yearFrom));
+    i++;
+  } else if (yearTo) {
+    where.push(`(ri.data->>'year')::int <= $${i}`);
+    params.push(Number(yearTo));
     i++;
   }
 
