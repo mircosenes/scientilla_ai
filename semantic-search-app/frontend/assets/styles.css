@@ -78,7 +78,40 @@ button:hover {
 #search-form{
   margin: 0;
   padding: 0;
+  align-items: flex-start;
 }
+
+#search-form input[type="text"],
+#search-form textarea {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  border: 0.1rem solid #cacaca;
+  border-radius: 0.625rem;
+  background: #fff;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+#search-form button {
+height: 4.3rem;
+}
+
+#search-form input[type="text"]:focus,
+#search-form textarea:focus {
+  outline: none;
+  border-color: #457b9d;
+}
+
+#search-form textarea {
+  min-height: 3.1rem;
+  max-height: 10rem;
+  resize: vertical;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
 
 .search-controls{
   display: grid;

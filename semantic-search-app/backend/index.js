@@ -19,6 +19,12 @@ function embeddingToPgvectorStr(vec) {
 
 const EMBED_URL = process.env.EMBED_URL || "http://localhost:8000";
 
+function splitCommaList(v) {
+  return String(v || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 async function getEmbeddingFromService(query) {
   const controller = new AbortController();
@@ -242,18 +248,39 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
     i++;
   }
 
-  // author name - author table
+  // author name - author table (comma-separated)
   if (has(filters.author)) {
-    where.push(`
-      EXISTS (
-        SELECT 1
-        FROM author a
-        WHERE a.research_item_id = ri.id
-          AND a.name ILIKE $${i}
-      )
-    `);
-    params.push(`%${String(filters.author).trim()}%`);
-    i++;
+    const names = splitCommaList(filters.author);
+
+    if (names.length > 20) throw new Error("too many authors");
+
+    if (names.length === 1) {
+      where.push(`
+        EXISTS (
+          SELECT 1
+          FROM author a
+          WHERE a.research_item_id = ri.id
+            AND a.name ILIKE $${i}
+        )
+      `);
+      params.push(`%${names[0]}%`);
+      i++;
+    } else if (names.length > 1) {
+      const parts = [];
+      for (const n of names) {
+        parts.push(`
+          EXISTS (
+            SELECT 1
+            FROM author a
+            WHERE a.research_item_id = ri.id
+              AND a.name ILIKE $${i}
+          )
+        `);
+        params.push(`%${n}%`);
+        i++;
+      }
+      where.push(parts.join(" AND "));
+    }
   }
 
   // source title
