@@ -294,9 +294,7 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
   if (has(filters.source_type)) {
     where.push(`
       (
-        (ri.data->'sourceType'->>'key') ILIKE $${i}
-        OR (ri.data->'sourceType'->>'label') ILIKE $${i}
-        OR (ri.data->'source'->>'sourceTypeId') = $${i}
+        (ri.data->'sourceType'->>'key') = $${i}
       )
     `);
     params.push(String(filters.source_type).trim());
@@ -393,29 +391,7 @@ app.post("/api/search", async (req, res) => {
     const hasFilters = clause.trim().length > 0;
 
     // 1) build SQL for dense vector search (SPECTER2)
-    const denseSql = hasFilters
-      ? `
-        WITH filtered AS MATERIALIZED (
-          SELECT
-            ri.id,
-            ri.data,
-            ri.embedding_specter2,
-            ri.research_item_type_id
-          FROM research_item ri
-          LEFT JOIN research_item_type rit
-            ON rit.id = ri.research_item_type_id
-          WHERE ri.kind = 'verified'
-          ${clause}
-        )
-        SELECT
-          f.id,
-          f.data,
-          1 - (f.embedding_specter2 <=> $1::vector) AS score
-        FROM filtered f
-        ORDER BY f.embedding_specter2 <=> $1::vector
-        LIMIT $${2 + params.length};
-      `
-      : `
+    const denseSql = `
         SELECT
           ri.id,
           ri.data,
@@ -424,34 +400,13 @@ app.post("/api/search", async (req, res) => {
         LEFT JOIN research_item_type rit
           ON rit.id = ri.research_item_type_id
         WHERE ri.kind = 'verified'
+          ${clause}
         ORDER BY ri.embedding_specter2 <=> $1::vector
         LIMIT $${2 + params.length};
       `;
 
     // 2) build SQL for lexical search (bm25)
-    const lexSql = hasFilters
-  ? `
-    WITH filtered AS MATERIALIZED (
-      SELECT
-        ri.id,
-        ri.data,
-        ri.pg_textsearch_text,
-        ri.research_item_type_id
-      FROM research_item ri
-      LEFT JOIN research_item_type rit
-        ON rit.id = ri.research_item_type_id
-      WHERE ri.kind = 'verified'
-      ${clause}
-    )
-    SELECT
-      f.id,
-      f.data,
-      (f.pg_textsearch_text <@> to_bm25query($1, 'research_item_pg_textsearch_idx')) AS score
-    FROM filtered f
-    ORDER BY score ASC
-    LIMIT $${2 + params.length};
-  `
-  : `
+    const lexSql =`
     SELECT
       ri.id,
       ri.data,
@@ -460,6 +415,7 @@ app.post("/api/search", async (req, res) => {
     LEFT JOIN research_item_type rit
       ON rit.id = ri.research_item_type_id
     WHERE ri.kind = 'verified'
+      ${clause}
     ORDER BY score ASC
     LIMIT $${2 + params.length};
   `;
