@@ -29,3 +29,5 @@ db.md
 test
 
 .env
+
+*.dump

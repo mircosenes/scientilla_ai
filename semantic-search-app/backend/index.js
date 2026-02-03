@@ -435,7 +435,7 @@ app.post("/api/search", async (req, res) => {
       SELECT
         ri.id,
         ri.data,
-        ri.search_text,
+        ri.pg_textsearch_text,
         ri.research_item_type_id
       FROM research_item ri
       LEFT JOIN research_item_type rit
@@ -446,7 +446,7 @@ app.post("/api/search", async (req, res) => {
     SELECT
       f.id,
       f.data,
-      (f.search_text <@> to_bm25query($1, 'research_item_bm25_idx')) AS score
+      (f.pg_textsearch_text <@> to_bm25query($1, 'research_item_pg_textsearch_idx')) AS score
     FROM filtered f
     ORDER BY score ASC
     LIMIT $${2 + params.length};
@@ -455,7 +455,7 @@ app.post("/api/search", async (req, res) => {
     SELECT
       ri.id,
       ri.data,
-      (ri.search_text <@> to_bm25query($1, 'research_item_bm25_idx')) AS score
+      (ri.pg_textsearch_text <@> to_bm25query($1, 'research_item_pg_textsearch_idx')) AS score
     FROM research_item ri
     LEFT JOIN research_item_type rit
       ON rit.id = ri.research_item_type_id
