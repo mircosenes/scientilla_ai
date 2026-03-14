@@ -13,6 +13,31 @@ const pool = new Pool({
   connectionString: process.env.DB_URL,
 });
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForDbReady() {
+  const maxAttempts = Number(process.env.DB_WAIT_ATTEMPTS || 60);
+  const delayMs = Number(process.env.DB_WAIT_DELAY_MS || 2000);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const res = await pool.query(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'research_item' LIMIT 1"
+      );
+      if (res.rowCount > 0) return;
+    } catch (err) {
+      // ignore until DB is reachable and schema is restored
+    }
+
+    console.log(`Waiting for DB restore... (${attempt}/${maxAttempts})`);
+    await sleep(delayMs);
+  }
+
+  throw new Error("DB not ready after waiting for restore");
+}
+
 function embeddingToPgvectorStr(vec) {
   return "[" + vec.map((x) => Number(x).toString()).join(",") + "]";
 }
@@ -650,9 +675,17 @@ app.post("/api/similar", async (req, res) => {
 
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Semantic search backend listening on http://localhost:${PORT}`);
-});
+(async () => {
+  try {
+    await waitForDbReady();
+    app.listen(PORT, () => {
+      console.log(`Semantic search backend listening on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("DB not ready, exiting.", err);
+    process.exit(1);
+  }
+})();
 
 function mergeItemFeedback(current, itemUpdate) {
   // current: array [{id,label,reason?}]

@@ -1,71 +1,61 @@
 services:
   db:
-    restart: always
     build: .
     container_name: scientilla_ai-db
+    restart: always
     shm_size: 1g
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=postgres
-      - PGDATA=/var/lib/postgresql/data
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGDATA: /var/lib/postgresql/data
     ports:
       - "${DB_PORT}:5432"
     volumes:
-      - pgdata:/var/lib/postgresql
-    networks: [default]
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -tAc \"SELECT 1 FROM information_schema.tables WHERE table_name='research_item'\" | grep -q 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   embedding-service:
-    restart: always
     build: ./embedding-service
+    container_name: scientilla_ai-embedding
+    restart: always
     environment:
-      - MODEL_NAME=allenai/specter2_base
-      - ADAPTER_NAME=allenai/specter2_adhoc_query
+      MODEL_NAME: ${MODEL_NAME}
+      ADAPTER_NAME: ${ADAPTER_NAME}
     volumes:
       - hf-cache:/root/.cache/huggingface
-    networks: [default]
 
   node-app:
-    restart: always
     build: ./semantic-search-app/backend
+    container_name: scientilla_ai-backend
+    restart: always
     environment:
-      - PORT=3000
-      - EMBED_URL=http://embedding-service:8000
-      - DB_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
+      PORT: 3000
+      EMBED_URL: http://embedding-service:8000
+      DB_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      NODE_ENV: production
     depends_on:
-      - db
-      - embedding-service
-    networks:
-      - default
-      - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.scientilla-backend.rule=Host(`${URL}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.scientilla-backend.entrypoints=websecure"
-      - "traefik.http.routers.scientilla-backend.tls=true"
-      - "traefik.http.services.scientilla-backend.loadbalancer.server.port=3000"
+      db:
+        condition: service_healthy
+      embedding-service:
+        condition: service_started
+    expose:
+      - "3000"
 
   nginx:
-    restart: always
     build:
       context: .
       dockerfile: ./static-server/Dockerfile
     container_name: scientilla_ai-nginx
+    restart: always
     depends_on:
       - node-app
-    networks:
-      - default
-      - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.scientilla-frontend.rule=Host(`${URL}`)"
-      - "traefik.http.routers.scientilla-frontend.entrypoints=websecure"
-      - "traefik.http.routers.scientilla-frontend.tls=true"
-      - "traefik.http.services.scientilla-frontend.loadbalancer.server.port=80"
-
-networks:
-  traefik:
-    external: true
+    ports:
+      - "${APP_PORT}:80"
 
 volumes:
   pgdata:
