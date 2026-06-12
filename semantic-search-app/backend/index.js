@@ -250,6 +250,20 @@ function buildFiltersWhereClause(filters = {}, startingParamIndex = 1) {
 
   const has = (v) => v !== undefined && v !== null && String(v).trim() !== "";
 
+  // restrict search to a fixed set of research_item ids
+  if (Array.isArray(filters.ids) && filters.ids.length > 0) {
+    if (filters.ids.length > 1000) throw new Error("too many ids");
+
+    const ids = filters.ids.map((id) => Number(id));
+    if (ids.some((id) => !Number.isInteger(id) || id <= 0)) {
+      throw new Error("invalid ids");
+    }
+
+    where.push(`ri.id = ANY($${i}::int[])`);
+    params.push(ids);
+    i++;
+  }
+
   // year range
   const yearFrom = has(filters.year_from) ? String(filters.year_from).trim() : "";
   const yearTo = has(filters.year_to) ? String(filters.year_to).trim() : "";

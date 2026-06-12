@@ -1,0 +1,1002 @@
+[
+  {
+    "name": "paper 1883 - lexical",
+    "query": "nylon-11 trastuzumab photoacoustic",
+    "expected": [
+      1883
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1883 - semantic",
+    "query": "polyamide particles targeted tumor theranostics",
+    "expected": [
+      1883
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1885 - lexical",
+    "query": "humanoid facial expressions",
+    "expected": [
+      1885
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1885 - semantic",
+    "query": "android face gestures social interaction",
+    "expected": [
+      1885
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1886 - lexical",
+    "query": "SCOUT nano-wire grid UV",
+    "expected": [
+      1886
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1886 - semantic",
+    "query": "compact ultraviolet polarizer vacuum testbench",
+    "expected": [
+      1886
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1887 - lexical",
+    "query": "Au-assisted cdse nanocrystals",
+    "expected": [
+      1887
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1887 - semantic",
+    "query": "gold seeded cadmium selenide rods",
+    "expected": [
+      1887
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1888 - lexical",
+    "query": "cascaded realistic tunnel barriers",
+    "expected": [
+      1888
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1888 - semantic",
+    "query": "shot fluctuations through serial quantum junctions",
+    "expected": [
+      1888
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1889 - lexical",
+    "query": "low-temperature MFM microarrays",
+    "expected": [
+      1889
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1889 - semantic",
+    "query": "cryogenic probe mapping molecular magnet chips",
+    "expected": [
+      1889
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1890 - lexical",
+    "query": "voltage-controlled braking nanopores",
+    "expected": [
+      1890
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1890 - semantic",
+    "query": "charged peptide ends slow pore translocation",
+    "expected": [
+      1890
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1891 - lexical",
+    "query": "heteroleptic Ru(II) DSSC",
+    "expected": [
+      1891
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1891 - semantic",
+    "query": "ruthenium dye compounds photovoltaic cells",
+    "expected": [
+      1891
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1892 - lexical",
+    "query": "HAR manual material handling",
+    "expected": [
+      1892
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1892 - semantic",
+    "query": "recognizing lifting carrying workplace motions",
+    "expected": [
+      1892
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1893 - lexical",
+    "query": "industrial exoskeleton muscle activity",
+    "expected": [
+      1893
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1893 - semantic",
+    "query": "workplace wearable support reduces EMG",
+    "expected": [
+      1893
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1894 - lexical",
+    "query": "tendon-driven hyper-redundant manipulators",
+    "expected": [
+      1894
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1894 - semantic",
+    "query": "snake robot cable actuation survey",
+    "expected": [
+      1894
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1895 - lexical",
+    "query": "lower limb soft exoskeleton fatigue",
+    "expected": [
+      1895
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1895 - semantic",
+    "query": "leg wearable assistance delays tiredness",
+    "expected": [
+      1895
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1896 - lexical",
+    "query": "automated LARP perovskite nanocrystal",
+    "expected": [
+      1896
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1896 - semantic",
+    "query": "robotic ligand screening cesium lead halide",
+    "expected": [
+      1896
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1897 - lexical",
+    "query": "dextrous virtual world prototyping",
+    "expected": [
+      1897
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1897 - semantic",
+    "query": "hand exploration simulated design evaluation",
+    "expected": [
+      1897
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1899 - lexical",
+    "query": "ambipolar doping graphene SiC Ge",
+    "expected": [
+      1899
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1899 - semantic",
+    "query": "germanium insertion tunes epitaxial carbon sheet",
+    "expected": [
+      1899
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1901 - lexical",
+    "query": "tactile slip hand displacement",
+    "expected": [
+      1901
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1901 - semantic",
+    "query": "skin shear illusion alters reaching path",
+    "expected": [
+      1901
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1902 - lexical",
+    "query": "nanoporous gold silver SERS",
+    "expected": [
+      1902
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1902 - semantic",
+    "query": "plasmonic porous metal Raman sensor",
+    "expected": [
+      1902
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1903 - lexical",
+    "query": "light-driven reversible 2D lattices",
+    "expected": [
+      1903
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1903 - semantic",
+    "query": "photostimulated flat polymer grid morphing",
+    "expected": [
+      1903
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1904 - lexical",
+    "query": "parent-child neural synchrony attachment",
+    "expected": [
+      1904
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1904 - semantic",
+    "query": "caregiver offspring brain coupling bonds",
+    "expected": [
+      1904
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1905 - lexical",
+    "query": "nanocomposite optical storage",
+    "expected": [
+      1905
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1905 - semantic",
+    "query": "polymer media dense photonic memory",
+    "expected": [
+      1905
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1906 - lexical",
+    "query": "β-Catenin hippocampal synapses",
+    "expected": [
+      1906
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1906 - semantic",
+    "query": "adhesion signaling controls glutamate connection strength",
+    "expected": [
+      1906
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1907 - lexical",
+    "query": "sex/gender nanotechnology nanomaterials",
+    "expected": [
+      1907
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1907 - semantic",
+    "query": "inclusive biomedical nano research variables",
+    "expected": [
+      1907
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1908 - lexical",
+    "query": "FEniCSx nanoplasmonics electromagnetism",
+    "expected": [
+      1908
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1908 - semantic",
+    "query": "finite element solver for nano optics",
+    "expected": [
+      1908
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1909 - lexical",
+    "query": "FUS Pepper circRNA lncRNA",
+    "expected": [
+      1909
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1909 - semantic",
+    "query": "fluorescent tagging transcripts in protein condensates",
+    "expected": [
+      1909
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1910 - lexical",
+    "query": "monolithic suspension virgo",
+    "expected": [
+      1910
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1910 - semantic",
+    "query": "gravitational wave detector fused pendulum progress",
+    "expected": [
+      1910
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1911 - lexical",
+    "query": "nonsmooth implicit differentiation rates",
+    "expected": [
+      1911
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1911 - semantic",
+    "query": "gradients through kinked solvers convergence theory",
+    "expected": [
+      1911
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1912 - lexical",
+    "query": "Fresnel CDI color-image encryption",
+    "expected": [
+      1912
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1912 - semantic",
+    "query": "holographic optical cryptography using diffraction",
+    "expected": [
+      1912
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1913 - lexical",
+    "query": "ISAM OCT DHM reconstruction",
+    "expected": [
+      1913
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1913 - semantic",
+    "query": "interference microscopy inverse imaging comparison",
+    "expected": [
+      1913
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1914 - lexical",
+    "query": "joint space inertia matrix",
+    "expected": [
+      1914
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1914 - semantic",
+    "query": "robot mass matrix experimental identification",
+    "expected": [
+      1914
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1915 - lexical",
+    "query": "fabric-based wearable haptics",
+    "expected": [
+      1915
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1915 - semantic",
+    "query": "textile touch feedback garments",
+    "expected": [
+      1915
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1916 - lexical",
+    "query": "wireless capsule endoscopy telemetry",
+    "expected": [
+      1916
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1916 - semantic",
+    "query": "in-body camera communication numerical modeling",
+    "expected": [
+      1916
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1917 - lexical",
+    "query": "artificial force-field robotics",
+    "expected": [
+      1917
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1917 - semantic",
+    "query": "potential field path planning methods",
+    "expected": [
+      1917
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1918 - lexical",
+    "query": "EGT rGO rectification filtering",
+    "expected": [
+      1918
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1918 - semantic",
+    "query": "graphene oxide transistor analog signal processing",
+    "expected": [
+      1918
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1919 - lexical",
+    "query": "hydrodynamic free electrons InGaAs nanoantennas",
+    "expected": [
+      1919
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1919 - semantic",
+    "query": "fluid electron dynamics in doped semiconductor antennas",
+    "expected": [
+      1919
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1920 - lexical",
+    "query": "Koopman harmonic robotic systems",
+    "expected": [
+      1920
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1920 - semantic",
+    "query": "data driven spectral modeling of robot motion",
+    "expected": [
+      1920
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1922 - lexical",
+    "query": "CO water ices snowline ML potentials",
+    "expected": [
+      1922
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1922 - semantic",
+    "query": "carbon monoxide binding on cosmic ice surfaces",
+    "expected": [
+      1922
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1923 - lexical",
+    "query": "cerebellar ataxia quantitative cybernetic",
+    "expected": [
+      1923
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1923 - semantic",
+    "query": "motor disorder measurement control theory",
+    "expected": [
+      1923
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1924 - lexical",
+    "query": "dengue EDE antibodies residue interactions",
+    "expected": [
+      1924
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1924 - semantic",
+    "query": "viral epitope binding broad neutralizers",
+    "expected": [
+      1924
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1925 - lexical",
+    "query": "joint-space inertia branched kinematic trees",
+    "expected": [
+      1925
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1925 - semantic",
+    "query": "fast robot mass matrix decomposition branching",
+    "expected": [
+      1925
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1926 - lexical",
+    "query": "deep learning avatars coordination tasks",
+    "expected": [
+      1926
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1926 - semantic",
+    "query": "neural controller virtual agents group behavior",
+    "expected": [
+      1926
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1927 - lexical",
+    "query": "slippery particle Poiseuille viscoelastic",
+    "expected": [
+      1927
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1927 - semantic",
+    "query": "wall slip sphere migration in channel flows",
+    "expected": [
+      1927
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1928 - lexical",
+    "query": "TR-ARPES matrix elements",
+    "expected": [
+      1928
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1928 - semantic",
+    "query": "probe polarization effects ultrafast photoemission",
+    "expected": [
+      1928
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1929 - lexical",
+    "query": "SMA force control PID",
+    "expected": [
+      1929
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1929 - semantic",
+    "query": "nickel titanium actuator disturbance rejection",
+    "expected": [
+      1929
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1930 - lexical",
+    "query": "FBOI VT virtual avatar",
+    "expected": [
+      1930
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1930 - semantic",
+    "query": "embodied VR touch illusion timing",
+    "expected": [
+      1930
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1931 - lexical",
+    "query": "SMA frequency response",
+    "expected": [
+      1931
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1931 - semantic",
+    "query": "nickel titanium wire transfer function",
+    "expected": [
+      1931
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1932 - lexical",
+    "query": "audio frequency SMA actuators",
+    "expected": [
+      1932
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1932 - semantic",
+    "query": "acoustic measurement high bandwidth smart wire",
+    "expected": [
+      1932
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1933 - lexical",
+    "query": "constraint force algorithm rigid-body",
+    "expected": [
+      1933
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1933 - semantic",
+    "query": "parallel dynamics for articulated mechanisms",
+    "expected": [
+      1933
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1934 - lexical",
+    "query": "fine-scale roughness tractions",
+    "expected": [
+      1934
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1934 - semantic",
+    "query": "adhesive contact rough interface force law",
+    "expected": [
+      1934
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1935 - lexical",
+    "query": "soft solids roughness elastohydrodynamics",
+    "expected": [
+      1935
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1935 - semantic",
+    "query": "lubricated rubber contact transient sliding",
+    "expected": [
+      1935
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  },
+  {
+    "name": "paper 1936 - lexical",
+    "query": "fMRI OX1R OX2R antagonists",
+    "expected": [
+      1936
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "lexical-acronym"
+  },
+  {
+    "name": "paper 1936 - semantic",
+    "query": "brain maps wakefulness reward receptor blockers",
+    "expected": [
+      1936
+    ],
+    "k": 20,
+    "filters": {},
+    "type": "semantic"
+  }
+]

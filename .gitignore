@@ -26,8 +26,6 @@ dump.sql
 backup.sql
 db.md
 
-test
-
 .env
 
 *.dump
