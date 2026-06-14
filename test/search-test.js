@@ -176,7 +176,7 @@ function printFinalConclusion(globalSummaries, typeSummaries) {
 
 async function main() {
   const cases = JSON.parse(await fs.readFile(CASES_FILE, "utf8"));
-  const scopeIds = await readPaperIds(PAPERS_FILE);
+  
 
   const globalStats = Object.fromEntries(MODES.map((mode) => [mode, emptyStats()]));
   const typeStats = {};
@@ -188,11 +188,7 @@ async function main() {
   log(`API: ${API_URL}`);
   log(`Cases: ${cases.length}`);
 
-  if (scopeIds.length) {
-    log(`Scope: ${scopeIds.length} papers from ${PAPERS_FILE}`);
-  } else {
-    log("Scope: all papers in the database");
-  }
+
 
   for (const testCase of cases) {
     const type = normalizeType(testCase.type);
@@ -201,9 +197,7 @@ async function main() {
       typeStats[type] = Object.fromEntries(MODES.map((mode) => [mode, emptyStats()]));
     }
 
-    const scopedCase = scopeIds.length
-      ? { ...testCase, filters: { ...(testCase.filters || {}), ids: scopeIds } }
-      : testCase;
+   const scopedCase = testCase;
 
     log(`\n${testCase.name}`);
     log(`Type: ${type}`);
