@@ -5,6 +5,8 @@ const path = require("node:path");
 
 const API_URL = process.env.SEARCH_API_URL || "http://localhost:8080/api/search";
 const MODES = ["hybrid", "specter2", "bm25"];
+const KS = [5, 10, 20];
+const MAX_K = Math.max(...KS);
 const CASES_FILE = process.argv[2] || path.join(__dirname, "cases.json");
 const PAPERS_FILE = process.env.SEARCH_TEST_PAPERS || path.join(__dirname, "papers.csv");
 
@@ -52,7 +54,7 @@ async function search(testCase, mode) {
     },
     body: JSON.stringify({
       query: testCase.query,
-      top_k: testCase.k || 10,
+      top_k: MAX_K,
       filters: testCase.filters || {},
       mode,
     }),
@@ -65,8 +67,8 @@ async function search(testCase, mode) {
   return (await res.json()).results || [];
 }
 
-function score(results, expected) {
-  const ids = results.map((r) => String(r.id));
+function score(results, expected, k) {
+  const ids = results.slice(0, k).map((r) => String(r.id));
   const wanted = expected.map(String);
   const first = ids.findIndex((id) => wanted.includes(id));
 
@@ -117,17 +119,33 @@ function summarize(stats) {
   };
 }
 
-function printSummaryTable(title, summaries) {
+function printSummaryTable(title, summariesByK) {
   log(`\n${title}`);
   log("-".repeat(title.length));
-  log("mode       cases   hit@k   mrr     avg_rank");
-  log("--------------------------------------------");
 
-  for (const [mode, s] of Object.entries(summaries)) {
+  log(
+    "mode       cases   hit@5   hit@10  hit@20  mrr@5   mrr@10  mrr@20  avg_rank@20"
+  );
+
+  log(
+    "---------------------------------------------------------------------------"
+  );
+
+  for (const mode of MODES) {
+    const s5 = summariesByK[5][mode];
+    const s10 = summariesByK[10][mode];
+    const s20 = summariesByK[20][mode];
+
     log(
-      `${mode.padEnd(10)} ${String(s.total).padEnd(7)} ${fmt(s.hitRate).padEnd(7)} ${fmt(
-        s.mrr
-      ).padEnd(7)} ${s.avgRank ? fmt(s.avgRank) : "-"}`
+      `${mode.padEnd(10)} ` +
+      `${String(s20.total).padEnd(7)} ` +
+      `${fmt(s5.hitRate).padEnd(7)} ` +
+      `${fmt(s10.hitRate).padEnd(7)} ` +
+      `${fmt(s20.hitRate).padEnd(7)} ` +
+      `${fmt(s5.mrr).padEnd(7)} ` +
+      `${fmt(s10.mrr).padEnd(7)} ` +
+      `${fmt(s20.mrr).padEnd(7)} ` +
+      `${s20.avgRank ? fmt(s20.avgRank) : "-"}`
     );
   }
 }
@@ -178,8 +196,14 @@ async function main() {
   const cases = JSON.parse(await fs.readFile(CASES_FILE, "utf8"));
   
 
-  const globalStats = Object.fromEntries(MODES.map((mode) => [mode, emptyStats()]));
-  const typeStats = {};
+ const globalStats = Object.fromEntries(
+  KS.map((k) => [
+    k,
+    Object.fromEntries(MODES.map((mode) => [mode, emptyStats()])),
+  ])
+);
+
+const typeStats = {};
 
   let failed = false;
 
@@ -193,9 +217,14 @@ async function main() {
   for (const testCase of cases) {
     const type = normalizeType(testCase.type);
 
-    if (!typeStats[type]) {
-      typeStats[type] = Object.fromEntries(MODES.map((mode) => [mode, emptyStats()]));
-    }
+  if (!typeStats[type]) {
+  typeStats[type] = Object.fromEntries(
+    KS.map((k) => [
+      k,
+      Object.fromEntries(MODES.map((mode) => [mode, emptyStats()])),
+    ])
+  );
+}
 
    const scopedCase = testCase;
 
@@ -203,21 +232,26 @@ async function main() {
     log(`Type: ${type}`);
     log(`Query: ${testCase.query}`);
 
-    for (const mode of MODES) {
-      const results = await search(scopedCase, mode);
-      const result = score(results, testCase.expected || []);
+for (const mode of MODES) {
+  const results = await search(scopedCase, mode);
 
-      updateStats(globalStats[mode], testCase, mode, result);
-      updateStats(typeStats[type][mode], testCase, mode, result);
+  for (const k of KS) {
+    const result = score(results, testCase.expected || [], k);
 
-      log(
-        `${mode.padEnd(8)} hit=${result.hit} rank=${result.rank || "-"} mrr=${fmt(result.mrr)}`
-      );
-    }
+    updateStats(globalStats[k][mode], testCase, mode, result);
+    updateStats(typeStats[type][k][mode], testCase, mode, result);
+
+    log(
+      `${mode.padEnd(8)} @${String(k).padEnd(2)} hit=${result.hit} rank=${
+        result.rank || "-"
+      } mrr=${fmt(result.mrr)}`
+    );
+  }
+}
 
     if ((testCase.expected || []).length) {
       const allMissed = MODES.every((mode) => {
-        const lastMiss = globalStats[mode].misses.at(-1);
+        const lastMiss = globalStats[MAX_K][mode].misses.at(-1);
         return lastMiss && lastMiss.name === testCase.name;
       });
 
@@ -225,27 +259,37 @@ async function main() {
     }
   }
 
-  const globalSummaries = Object.fromEntries(
-    Object.entries(globalStats).map(([mode, stats]) => [mode, summarize(stats)])
+const globalSummariesByK = {};
+
+for (const k of KS) {
+  globalSummariesByK[k] = Object.fromEntries(
+    Object.entries(globalStats[k]).map(([mode, stats]) => [mode, summarize(stats)])
   );
+}
 
-  printSummaryTable("Final report by mode", globalSummaries);
+printSummaryTable("Final report by mode", globalSummariesByK);
 
-  const typeSummaries = {};
+const typeSummariesByK = {};
 
-  for (const [type, byMode] of Object.entries(typeStats)) {
-    typeSummaries[type] = Object.fromEntries(
-      Object.entries(byMode).map(([mode, stats]) => [mode, summarize(stats)])
+for (const [type, byK] of Object.entries(typeStats)) {
+  typeSummariesByK[type] = {};
+
+  for (const k of KS) {
+    typeSummariesByK[type][k] = Object.fromEntries(
+      Object.entries(byK[k]).map(([mode, stats]) => [mode, summarize(stats)])
     );
-
-    printSummaryTable(`Report for ${type} queries`, typeSummaries[type]);
   }
 
-  printFinalConclusion(globalSummaries, typeSummaries);
+  printSummaryTable(`Report for ${type} queries`, typeSummariesByK[type]);
+}
 
-  const missedCases = Object.values(globalSummaries)
-    .flatMap((summary) => summary.misses)
-    .slice(0, 10);
+printFinalConclusion(globalSummariesByK[20], Object.fromEntries(
+  Object.entries(typeSummariesByK).map(([type, byK]) => [type, byK[20]])
+));
+
+ const missedCases = Object.values(globalSummariesByK[20])
+  .flatMap((summary) => summary.misses)
+  .slice(0, 10);
 
   if (missedCases.length) {
     log("\nSample missed cases");
