@@ -17,3 +17,6 @@ The system is designed for **local experimentation and research exploration**, w
 - A minimal frontend for interactive exploration of search results and similar items
 
 The goal of Scientilla AI is to explore how **semantic search and classical information retrieval techniques** can be combined in a transparent and practical way for scientific discovery.
+
+Full report: https://github.com/mircosenes/scientilla_ai/blob/main/REPORT_Semantic_Search.pdf
+
